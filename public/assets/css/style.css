@@ -946,6 +946,7 @@ select.input { cursor: pointer; }
   color: #000;
   line-height: 1.5;
   padding: 12px 10px;
+  margin: 0 auto;
   box-shadow: 0 2px 16px rgba(0,0,0,0.18);
 }
 .r-center { text-align: center; }

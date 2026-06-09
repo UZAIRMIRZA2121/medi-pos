@@ -90,7 +90,7 @@
       <h3>Invoice Preview</h3>
       <button class="modal-close" onclick="closeInvoiceModal()">×</button>
     </div>
-    <div class="modal-body" id="invoicePreview" style="background:#f0f0f0;display:flex;justify-content:center;padding:24px"></div>
+    <div class="modal-body" id="invoicePreview" style="background:#f0f0f0;padding:24px"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeInvoiceModal()">Close</button>
       <button class="btn btn-primary" onclick="printInvoice()">Print Invoice</button>

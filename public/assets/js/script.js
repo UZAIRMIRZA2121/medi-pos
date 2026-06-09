@@ -102,6 +102,66 @@ function seedDemoData() {
   store.set('seeded', true);
 }
 
+
+async function api(url, method = 'GET', body = null) {
+    const opts = {
+        method,
+        cache: 'no-store',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    };
+    if (body) opts.body = JSON.stringify(body);
+    const res = await fetch(url, opts);
+    if (!res.ok) {
+        let errMsg = 'API Error';
+        try {
+            const errData = await res.json();
+            errMsg = errData.message || errMsg;
+        } catch(err) {}
+        throw new Error(errMsg);
+    }
+    if (method !== 'DELETE') return await res.json();
+    return true;
+}
+
+async function syncData() {
+    try {
+        const [cats, meds, supps, custs, sales] = await Promise.all([
+            api('/api/categories'),
+            api('/api/medicines'),
+            api('/api/suppliers'),
+            api('/api/customers'),
+            api('/api/sales')
+        ]);
+        
+        // Map DB columns to frontend expected fields if necessary
+        // The frontend expects: catId instead of category_id, supplierId instead of supplier_id
+        const mappedMeds = meds.map(m => ({...m, catId: m.category_id, supplierId: m.supplier_id, stock: m.stock_quantity, lowStock: m.low_stock_level, sale: m.sale_price, purchase: m.purchase_price, expiry: m.expiry_date, mfg: m.mfg_date, generic: m.generic_name }));
+        
+        store.set('categories', cats);
+        store.set('medicines', mappedMeds);
+        store.set('suppliers', supps);
+        store.set('customers', custs);
+        store.set('invoices', sales);
+        
+        if (document.getElementById('page-categories')) renderCategories();
+        if (document.getElementById('page-medicines')) renderMedicines();
+        if (document.getElementById('page-suppliers')) renderSuppliers();
+        if (document.getElementById('page-customers')) renderCustomers();
+        if (document.getElementById('page-alerts')) renderAlerts();
+        if (document.getElementById('page-sales')) renderSales();
+        if (document.getElementById('page-invoices')) renderInvoices();
+        if (document.getElementById('page-pos')) renderPOS();
+
+    } catch(e) {
+        console.error('Failed to sync data', e);
+        toast('Database connection error', 'danger');
+    }
+}
+
 // ============================================================
 // STATE
 // ============================================================
@@ -111,27 +171,7 @@ let currentPage = 'dashboard';
 // ============================================================
 // NAVIGATION
 // ============================================================
-function navigate(page) {
-  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-
-  const el = document.getElementById('page-' + page);
-  if (el) el.classList.remove('hidden');
-
-  const nav = document.querySelector(`[data-page="${page}"]`);
-  if (nav) nav.classList.add('active');
-
-  const titles = {
-    dashboard: 'Dashboard', pos: 'POS / Billing', invoices: 'Invoice History',
-    sales: 'Sales History', medicines: 'Medicine Inventory', categories: 'Category Management',
-    suppliers: 'Supplier Management', customers: 'Customer Management', alerts: 'Stock & Expiry Alerts'
-  };
-  document.getElementById('pageTitle').textContent = titles[page] || page;
-  currentPage = page;
-
-  closeSidebar();
-  renderPage(page);
-}
+function navigate(page) { window.location.href = '/' + page; }
 
 function renderPage(page) {
   const r = {
@@ -242,72 +282,8 @@ function updateAlertBadge() {
 // DASHBOARD
 // ============================================================
 function renderDashboard() {
-  const meds = store.get('medicines');
-  const cats = store.get('categories');
-  const invoices = store.get('invoices');
-  const today = new Date().toDateString();
-
-  const todaySales = invoices.filter(i => new Date(i.date).toDateString() === today);
-  const todayTotal = todaySales.reduce((s, i) => s + i.grand, 0);
-  const lowStock = meds.filter(m => isLowStock(m));
-  const expired = meds.filter(m => isExpired(m.expiry));
-
-  const stats = [
-    { label: 'Total Medicines', value: meds.length, icon: '<circle cx="12" cy="12" r="5"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>', bg: '#e6f0ff', color: '#0066cc' },
-    { label: 'Categories', value: cats.length, icon: '<path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>', bg: '#ede9fe', color: '#6366f1' },
-    { label: 'Low Stock', value: lowStock.length, icon: '<line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/>', bg: '#fef3c7', color: '#f59e0b' },
-    { label: 'Expired', value: expired.length, icon: '<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>', bg: '#fee2e2', color: '#ef4444' },
-    { label: 'Today Sales', value: fmtCur(todayTotal), icon: '<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>', bg: '#d1fae5', color: '#10b981' },
-    { label: 'Total Invoices', value: invoices.length, icon: '<path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>', bg: '#fce7f3', color: '#ec4899' },
-  ];
-
-  document.getElementById('dashStats').innerHTML = stats.map(s =>
-    `<div class="stat-card">
-      <div class="stat-icon" style="background:${s.bg};color:${s.color}">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${s.icon}</svg>
-      </div>
-      <div>
-        <div class="stat-value">${s.value}</div>
-        <div class="stat-label">${s.label}</div>
-      </div>
-    </div>`
-  ).join('');
-
-  // Recent sales
-  const recent = [...invoices].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 8);
-  document.getElementById('recentSalesTbody').innerHTML = recent.length ?
-    recent.map(i => `<tr>
-      <td><span class="badge badge-primary" style="font-family:var(--mono)">${i.id}</span></td>
-      <td>${i.custName}</td>
-      <td style="font-weight:600;color:var(--primary)">${fmtCur(i.grand)}</td>
-      <td>${fmtDate(i.date)}</td>
-      <td><span class="badge badge-success">Paid</span></td>
-    </tr>`).join('') :
-    '<tr><td colspan="5" class="empty-cell">No sales yet</td></tr>';
-
-  // Low stock alert
-  document.getElementById('lowStockAlertList').innerHTML = lowStock.length ?
-    lowStock.slice(0, 5).map(m => `<div class="alert-item">
-      <div><div class="name">${m.name}</div><div class="meta">Stock: ${m.stock} | Min: ${m.lowStock}</div></div>
-      <span class="badge badge-warning">Low</span>
-    </div>`).join('') :
-    '<div class="no-data">No low stock items</div>';
-
-  // Expiry alert
-  const expiring = meds.filter(m => {
-    const d = daysDiff(m.expiry);
-    return d >= 0 && d <= 30;
-  }).concat(expired).slice(0, 5);
-  document.getElementById('expiryAlertList').innerHTML = expiring.length ?
-    expiring.map(m => {
-      const d = daysDiff(m.expiry);
-      const exp = d < 0;
-      return `<div class="alert-item">
-        <div><div class="name">${m.name}</div><div class="meta">${exp ? 'Expired ' + Math.abs(d) + ' days ago' : 'Expires in ' + d + ' days'}</div></div>
-        <span class="badge ${exp ? 'badge-danger' : 'badge-warning'}">${exp ? 'Expired' : d + 'd'}</span>
-      </div>`;
-    }).join('') :
-    '<div class="no-data">No expiry alerts</div>';
+  // Now rendered dynamically via Laravel Blade from DashboardController
+  // The frontend script no longer overwrites the dashboard HTML.
 }
 
 // ============================================================
@@ -489,7 +465,7 @@ function addToCart(medId) {
     existing.qty++;
     existing.sub = existing.qty * existing.price;
   } else {
-    cart.push({ medId: med.id, name: med.name, price: med.sale, qty: 1, sub: med.sale, maxStock: med.stock });
+    cart.push({ medId: med.id, name: med.name, price: parseFloat(med.sale), qty: 1, sub: parseFloat(med.sale), maxStock: parseFloat(med.stock) });
   }
   renderCart();
   renderMedGrid();
@@ -574,56 +550,56 @@ function renderCartSummary() {
   document.getElementById('sumReturn').textContent = fmtCur(ret);
 }
 
-function checkout() {
+async function checkout() {
   if (!cart.length) { toast('Cart is empty!', 'warning'); return; }
 
-  const subtotal = cart.reduce((s, c) => s + c.sub, 0);
   const discount = parseFloat(document.getElementById('posDiscount').value || 0);
   const tax = parseFloat(document.getElementById('posTax').value || 0);
   const paid = parseFloat(document.getElementById('posPaid').value || 0);
-  const discAmt = subtotal * discount / 100;
-  const taxAmt = (subtotal - discAmt) * tax / 100;
-  const grand = subtotal - discAmt + taxAmt;
-  const due = Math.max(0, grand - paid);
-  const ret = Math.max(0, paid - grand);
-
-  const custId = document.getElementById('posCustomer').value;
-  const cust = custId ? getCustomer(custId) : null;
+  const custId = document.getElementById('posCustomer').value || null;
   const payment = document.getElementById('posPayment').value;
   const notes = document.getElementById('posNotes').value;
 
-  const invNum = store.get('nextInvNum', 1004);
-  const invId = 'INV' + String(invNum).padStart(4, '0');
-
-  const invoice = {
-    id: invId,
-    custId: custId || null,
-    custName: cust ? cust.name : 'Walk-in Customer',
-    items: cart.map(c => ({ ...c })),
-    subtotal, discount, tax, discAmt, taxAmt, grand, paid, due, ret,
-    payment, notes,
-    date: new Date().toISOString(),
-    cashier: 'Admin',
+  const payload = {
+      customer_id: custId,
+      discount_percent: discount,
+      tax_percent: tax,
+      paid_amount: paid,
+      payment_method: payment,
+      notes: notes,
+      items: cart.map(c => ({
+          medicine_id: c.medId,
+          quantity: c.qty,
+          unit_price: c.price
+      }))
   };
 
-  // Update stock
-  const meds = store.get('medicines');
-  cart.forEach(item => {
-    const m = meds.find(x => x.id == item.medId);
-    if (m) m.stock -= item.qty;
-  });
-  store.set('medicines', meds);
+  try {
+      const btn = document.getElementById('checkoutBtn');
+      const origText = btn.innerHTML;
+      btn.innerHTML = 'Processing...';
+      btn.disabled = true;
 
-  // Save invoice
-  const invoices = store.get('invoices');
-  invoices.push(invoice);
-  store.set('invoices', invoices);
-  store.set('nextInvNum', invNum + 1);
+      const invoice = await api('/pos/checkout', 'POST', payload);
+      
+      clearCart();
+      await syncData();
+      
+      toast(`Invoice generated successfully!`, 'success');
+      showInvoiceModal(invoice);
 
-  clearCart();
-  updateAlertBadge();
-  toast(`Invoice ${invId} generated successfully!`, 'success');
-  showInvoiceModal(invoice);
+      if (document.getElementById('autoPrint')?.checked) {
+          setTimeout(printInvoice, 300);
+      }
+
+      btn.innerHTML = origText;
+      btn.disabled = false;
+  } catch(e) {
+      toast(e.message, 'danger');
+      const btn = document.getElementById('checkoutBtn');
+      btn.innerHTML = 'Generate Invoice';
+      btn.disabled = false;
+  }
 }
 
 // ============================================================
@@ -727,8 +703,8 @@ function buildInvoiceHTML(inv) {
     <tr>
       <td><div class="r-item-name">${it.name}</div></td>
       <td style="text-align:center">${it.qty}</td>
-      <td style="text-align:right">${it.price.toFixed(0)}</td>
-      <td style="text-align:right">${it.sub.toFixed(0)}</td>
+      <td style="text-align:right">${parseFloat(it.price).toFixed(0)}</td>
+      <td style="text-align:right">${parseFloat(it.sub).toFixed(0)}</td>
     </tr>`).join('');
 
   const custPhone = inv.custId ? (getCustomer(inv.custId).phone || '') : '';
@@ -1006,53 +982,53 @@ function openMedModal(id) {
 }
 function closeMedModal() { document.getElementById('medModal').classList.add('hidden'); }
 
-function saveMedicine() {
+async function saveMedicine() {
   const name = document.getElementById('medName').value.trim();
-  const sale = parseFloat(document.getElementById('medSale').value);
-  const stock = parseInt(document.getElementById('medStock').value);
-  const expiry = document.getElementById('medExpiry').value;
-  if (!name || isNaN(sale) || isNaN(stock) || !expiry) { toast('Fill required fields!', 'warning'); return; }
-
-  const meds = store.get('medicines');
+  const catId = document.getElementById('medCat').value;
+  const sale = document.getElementById('medSale').value;
+  
+  if (!name || !catId || !sale) { toast('Name, Category, and Sale Price required!', 'warning'); return; }
+  
   const editId = document.getElementById('medId').value;
-  const med = {
-    name, sale, stock, expiry,
-    id: editId ? parseInt(editId) : nextId(meds),
-    generic: document.getElementById('medGeneric').value.trim(),
-    catId: parseInt(document.getElementById('medCat').value) || null,
+  const data = {
+    name,
+    category_id: catId,
+    supplier_id: document.getElementById('medSupplier').value || null,
+    generic_name: document.getElementById('medGeneric').value.trim(),
     company: document.getElementById('medCompany').value.trim(),
-    batch: document.getElementById('medBatch').value.trim(),
+    batch_number: document.getElementById('medBatch').value.trim(),
     barcode: document.getElementById('medBarcode').value.trim(),
-    purchase: parseFloat(document.getElementById('medPurchase').value) || 0,
-    lowStock: parseInt(document.getElementById('medLowStock').value) || 10,
-    mfg: document.getElementById('medMfg').value,
-    supplierId: parseInt(document.getElementById('medSupplier').value) || null,
+    purchase_price: document.getElementById('medPurchase').value || 0,
+    sale_price: sale,
+    stock_quantity: document.getElementById('medStock').value || 0,
+    low_stock_level: document.getElementById('medLowStock').value || 10,
+    expiry_date: document.getElementById('medExpiry').value || null,
+    mfg_date: document.getElementById('medMfg').value || null,
     rack: document.getElementById('medRack').value.trim(),
-    rx: document.getElementById('medRx').value,
-    desc: document.getElementById('medDesc').value.trim(),
+    requires_prescription: document.getElementById('medRx').value === 'yes' ? 1 : 0,
+    description: document.getElementById('medDesc').value.trim()
   };
-
-  if (editId) {
-    const idx = meds.findIndex(x => x.id == editId);
-    if (idx > -1) meds[idx] = med;
-    toast('Medicine updated!', 'success');
-  } else {
-    meds.push(med);
-    toast('Medicine added!', 'success');
-  }
-  store.set('medicines', meds);
-  closeMedModal();
-  renderMedicines();
-  updateAlertBadge();
+  
+  try {
+      if (editId) {
+          await api('/medicines/' + editId, 'PUT', data);
+          toast('Medicine updated!', 'success');
+      } else {
+          await api('/medicines', 'POST', data);
+          toast('Medicine added!', 'success');
+      }
+      closeMedModal();
+      await syncData();
+  } catch(e) { toast('Error saving medicine', 'danger'); }
 }
 
 function deleteMedicine(id) {
-  const med = store.get('medicines').find(m => m.id == id);
-  confirmDelete(`Delete "${med?.name}"?`, () => {
-    store.set('medicines', store.get('medicines').filter(m => m.id != id));
-    toast('Medicine deleted', 'danger');
-    renderMedicines();
-    updateAlertBadge();
+  confirmDelete('Delete this medicine?', async () => {
+    try {
+        await api('/medicines/' + id, 'DELETE');
+        toast('Medicine deleted', 'danger');
+        await syncData();
+    } catch(e) { toast('Error deleting', 'danger'); }
   });
 }
 
@@ -1089,28 +1065,28 @@ function renderCategories() {
     '<tr><td colspan="5" class="empty-cell">No categories found</td></tr>';
 }
 
-function saveCategory() {
+async function saveCategory() {
   const name = document.getElementById('catName').value.trim();
-  if (!name) { toast('Category name required!', 'warning'); return; }
-  const cats = store.get('categories');
+  if (!name) { toast('Category name is required!', 'warning'); return; }
+  
   const editId = document.getElementById('catEditId').value;
-  const cat = {
+  const data = {
     name,
-    id: editId ? parseInt(editId) : nextId(cats),
-    desc: document.getElementById('catDesc').value.trim(),
-    color: document.getElementById('catColor').value,
+    description: document.getElementById('catDesc').value.trim(),
+    color_tag: document.getElementById('catColor').value
   };
-  if (editId) {
-    const idx = cats.findIndex(c => c.id == editId);
-    if (idx > -1) cats[idx] = cat;
-    toast('Category updated!', 'success');
-  } else {
-    cats.push(cat);
-    toast('Category added!', 'success');
-  }
-  store.set('categories', cats);
-  resetCatForm();
-  renderCategories();
+  
+  try {
+      if (editId) {
+          await api('/categories/' + editId, 'PUT', data);
+          toast('Category updated!', 'success');
+      } else {
+          await api('/categories', 'POST', data);
+          toast('Category added!', 'success');
+      }
+      resetCatForm();
+      await syncData();
+  } catch(e) { toast('Error saving category', 'danger'); }
 }
 
 function editCategory(id) {
@@ -1124,11 +1100,12 @@ function editCategory(id) {
 }
 
 function deleteCategory(id) {
-  const cat = store.get('categories').find(c => c.id == id);
-  confirmDelete(`Delete "${cat?.name}"?`, () => {
-    store.set('categories', store.get('categories').filter(c => c.id != id));
-    toast('Category deleted', 'danger');
-    renderCategories();
+  confirmDelete('Delete this category?', async () => {
+    try {
+        await api('/categories/' + id, 'DELETE');
+        toast('Category deleted', 'danger');
+        await syncData();
+    } catch(e) { toast('Error deleting category', 'danger'); }
   });
 }
 
@@ -1189,39 +1166,40 @@ function openSuppModal(id) {
 }
 function closeSuppModal() { document.getElementById('suppModal').classList.add('hidden'); }
 
-function saveSupplier() {
+async function saveSupplier() {
   const name = document.getElementById('suppName').value.trim();
   const phone = document.getElementById('suppPhone').value.trim();
   if (!name || !phone) { toast('Name and phone required!', 'warning'); return; }
-  const list = store.get('suppliers');
+  
   const editId = document.getElementById('suppId').value;
-  const s = {
+  const data = {
     name, phone,
-    id: editId ? parseInt(editId) : nextId(list),
-    company: document.getElementById('suppCompany').value.trim(),
+    company_name: document.getElementById('suppCompany').value.trim(),
     email: document.getElementById('suppEmail').value.trim(),
     address: document.getElementById('suppAddress').value.trim(),
     notes: document.getElementById('suppNotes').value.trim(),
   };
-  if (editId) {
-    const idx = list.findIndex(x => x.id == editId);
-    if (idx > -1) list[idx] = s;
-    toast('Supplier updated!', 'success');
-  } else {
-    list.push(s);
-    toast('Supplier added!', 'success');
-  }
-  store.set('suppliers', list);
-  closeSuppModal();
-  renderSuppliers();
+  
+  try {
+      if (editId) {
+          await api('/suppliers/' + editId, 'PUT', data);
+          toast('Supplier updated!', 'success');
+      } else {
+          await api('/suppliers', 'POST', data);
+          toast('Supplier added!', 'success');
+      }
+      closeSuppModal();
+      await syncData();
+  } catch(e) { toast('Error saving supplier', 'danger'); }
 }
 
 function deleteSupplier(id) {
-  const s = store.get('suppliers').find(x => x.id == id);
-  confirmDelete(`Delete supplier "${s?.name}"?`, () => {
-    store.set('suppliers', store.get('suppliers').filter(x => x.id != id));
-    toast('Supplier deleted', 'danger');
-    renderSuppliers();
+  confirmDelete('Delete this supplier?', async () => {
+    try {
+        await api('/suppliers/' + id, 'DELETE');
+        toast('Supplier deleted', 'danger');
+        await syncData();
+    } catch(e) { toast('Error deleting', 'danger'); }
   });
 }
 
@@ -1276,39 +1254,40 @@ function openCustModal(id) {
 }
 function closeCustModal() { document.getElementById('custModal').classList.add('hidden'); }
 
-function saveCustomer() {
+async function saveCustomer() {
   const name = document.getElementById('custName').value.trim();
   const phone = document.getElementById('custPhone').value.trim();
   if (!name || !phone) { toast('Name and phone required!', 'warning'); return; }
-  const list = store.get('customers');
+  
   const editId = document.getElementById('custId').value;
-  const c = {
+  const data = {
     name, phone,
-    id: editId ? parseInt(editId) : nextId(list),
     email: document.getElementById('custEmail').value.trim(),
     age: parseInt(document.getElementById('custAge').value) || null,
     gender: document.getElementById('custGender').value,
     address: document.getElementById('custAddress').value.trim(),
   };
-  if (editId) {
-    const idx = list.findIndex(x => x.id == editId);
-    if (idx > -1) list[idx] = c;
-    toast('Customer updated!', 'success');
-  } else {
-    list.push(c);
-    toast('Customer added!', 'success');
-  }
-  store.set('customers', list);
-  closeCustModal();
-  renderCustomers();
+  
+  try {
+      if (editId) {
+          await api('/customers/' + editId, 'PUT', data);
+          toast('Customer updated!', 'success');
+      } else {
+          await api('/customers', 'POST', data);
+          toast('Customer added!', 'success');
+      }
+      closeCustModal();
+      await syncData();
+  } catch(e) { toast('Error saving customer', 'danger'); }
 }
 
 function deleteCustomer(id) {
-  const c = store.get('customers').find(x => x.id == id);
-  confirmDelete(`Delete customer "${c?.name}"?`, () => {
-    store.set('customers', store.get('customers').filter(x => x.id != id));
-    toast('Customer deleted', 'danger');
-    renderCustomers();
+  confirmDelete('Delete this customer?', async () => {
+    try {
+        await api('/customers/' + id, 'DELETE');
+        toast('Customer deleted', 'danger');
+        await syncData();
+    } catch(e) { toast('Error deleting', 'danger'); }
   });
 }
 
@@ -1364,7 +1343,8 @@ function renderAlerts() {
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-  seedDemoData();
+  // seedDemoData();
+  syncData();
   initTheme();
 
   // Date display
@@ -1390,5 +1370,5 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('overlay').addEventListener('click', closeSidebar);
 
   updateAlertBadge();
-  navigate('dashboard');
+  // navigate('dashboard'); // Removed to prevent infinite reload loop in MPA mode
 });
