@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MediPoint POS — Medical Store Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
+</head>
+<body>
+
+    @include('partials.sidebar')
+    
+    <!-- OVERLAY -->
+    <div class="overlay" id="overlay"></div>
+    
+    <!-- MAIN -->
+    <div class="main-wrapper">
+        @include('partials.topbar')
+        
+        @yield('content')
+    </div>
+    
+    @include('partials.modals')
+    
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="{{ asset('assets/js/script.js') }}"></script>
+</body>
+</html>
