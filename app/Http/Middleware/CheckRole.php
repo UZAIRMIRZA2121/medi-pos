@@ -21,10 +21,6 @@ class CheckRole
 
         $user = auth()->user();
 
-        // Admin has access to all routes
-        if ($user->type === 'admin') {
-            return $next($request);
-        }
 
         // Check if user's type is in the allowed roles for this route
         if (in_array($user->type, $roles)) {

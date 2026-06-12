@@ -709,17 +709,25 @@ function buildInvoiceHTML(inv) {
 
   const custPhone = inv.custId ? (getCustomer(inv.custId).phone || '') : '';
 
+  const sName = window.printSettings?.name || 'MediPoint Pharmacy';
+  const sDesc = (window.printSettings?.desc || "Shop #12, Main Market").replace(/\\n/g, '<br>');
+  const sAddress = (window.printSettings?.address || "Faisalabad, Punjab, Pakistan\\nPh: 041-1234567").replace(/\\n/g, '<br>');
+  const sHeading = window.printSettings?.heading || 'INVOICE';
+  const sFooter = (window.printSettings?.footer || "*** Thank You! ***\\nGet well soon. Visit again.\\nKeep medicines away from children.\\nStore as directed on packaging.").replace(/\\n/g, '<br>');
+  const sLogo = window.printSettings?.logo ? `<img src="${window.printSettings.logo}" style="max-height:40px; margin-bottom: 5px;">` : `<div class="r-logo">${sName.charAt(0)}</div>`;
+
   return `<div class="receipt" id="invoicePrintArea">
 
     <!-- Header -->
     <div class="r-center">
-      <div class="r-logo">M</div>
-      <div class="r-store-name">MediPoint Pharmacy</div>
+      ${sLogo}
+      <div class="r-store-name">${sName}</div>
       <div class="r-store-sub">
-        Shop #12, Main Market<br>
-        Faisalabad, Punjab, Pakistan<br>
-        Ph: 041-1234567
+        ${sDesc}
+        ${sDesc && sAddress ? '<br>' : ''}
+        ${sAddress}
       </div>
+      <div style="font-weight:bold; font-size:14px; margin-top:5px;">${sHeading}</div>
     </div>
 
     <hr class="r-divider-solid"/>
@@ -780,10 +788,7 @@ function buildInvoiceHTML(inv) {
 
     <!-- Footer -->
     <div class="r-footer">
-      <div class="r-thanks">*** Thank You! ***</div>
-      Get well soon. Visit again.<br>
-      Keep medicines away from children.<br>
-      Store as directed on packaging.<br>
+      ${sFooter}<br>
       <br>
       <span class="r-barcode">${inv.id}</span>
     </div>

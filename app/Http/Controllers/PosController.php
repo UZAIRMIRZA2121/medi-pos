@@ -66,8 +66,8 @@ class PosController extends Controller
             $ret = max(0, $paid - $grand);
             
             // Generate Invoice ID e.g., INV1004
-            $lastSale = Sale::orderBy('id', 'desc')->first();
-            $nextId = $lastSale ? $lastSale->id + 1 : 1001;
+            $storeSaleCount = Sale::count();
+            $nextId = 1001 + $storeSaleCount;
             $invoice_number = 'INV' . str_pad($nextId, 4, '0', STR_PAD_LEFT);
             
             $sale = Sale::create([

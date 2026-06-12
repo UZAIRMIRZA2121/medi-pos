@@ -1,8 +1,12 @@
 <?php
+
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
-class Customer extends Model {
+
+class PrintSetting extends Model
+{
     use \App\Traits\BelongsToStore;
+    
     protected $guarded = [];
-    public function sales() { return $this->hasMany(Sale::class); }
 }

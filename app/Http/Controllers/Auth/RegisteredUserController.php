@@ -18,9 +18,11 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function create(): View
+    public function create(Request $request): View
     {
-        return view('auth.register');
+        $ref_id = $request->query('ref_id');
+        $package_id = $request->query('package_id');
+        return view('auth.register', compact('ref_id', 'package_id'));
     }
 
     /**
@@ -34,12 +36,18 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'type' => ['required', 'in:store,seller'],
+            'ref_id' => ['nullable', 'exists:users,id'],
+            'package_id' => ['nullable', 'exists:packages,id'],
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'type' => $request->type,
+            'parent_id' => $request->ref_id,
+            'package_id' => $request->package_id,
         ]);
 
         event(new Registered($user));

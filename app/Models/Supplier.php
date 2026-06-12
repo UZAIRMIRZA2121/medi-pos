@@ -2,6 +2,7 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 class Supplier extends Model {
+    use \App\Traits\BelongsToStore;
     protected $guarded = [];
     public function medicines() { return $this->hasMany(Medicine::class); }
 }

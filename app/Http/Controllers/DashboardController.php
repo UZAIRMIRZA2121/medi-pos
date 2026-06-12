@@ -30,9 +30,16 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
             
+        $subscription = \App\Models\Subscription::with('package')
+            ->where('user_id', auth()->id())
+            ->where('status', 'active')
+            ->latest()
+            ->first();
+            
         return view('dashboard.index', compact(
             'totalMedicines', 'totalCategories', 'lowStockCount', 'expiredCount',
-            'todaySalesSum', 'totalInvoices', 'recentSales', 'lowStockItems', 'expiringItems'
+            'todaySalesSum', 'totalInvoices', 'recentSales', 'lowStockItems', 'expiringItems',
+            'subscription'
         ));
     }
 }

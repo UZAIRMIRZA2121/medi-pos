@@ -5,6 +5,45 @@
 
 <!-- DASHBOARD -->
     <div class="page" id="page-dashboard">
+    
+      @if(isset($subscription) && $subscription)
+      <div class="card mb-4" style="border-left: 4px solid #4f46e5; background: linear-gradient(90deg, #f8faff 0%, #ffffff 100%);">
+        <div class="card-body" style="padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <h4 style="margin: 0; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#4f46e5" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    Current Plan: {{ $subscription->package ? $subscription->package->name : 'Custom' }}
+                </h4>
+                <p style="margin: 5px 0 0; color: #64748b; font-size: 0.9rem;">
+                    Your subscription is currently active.
+                </p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                @if(is_null($subscription->end_date))
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;">Validity</div>
+                        <div style="font-size: 1.1rem; font-weight: 800; color: #10b981;">Lifetime</div>
+                    </div>
+                @else
+                    @php
+                        $daysLeft = \Carbon\Carbon::now()->diffInDays(\Carbon\Carbon::parse($subscription->end_date), false);
+                    @endphp
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.8rem; color: #64748b; text-transform: uppercase; font-weight: 600; letter-spacing: 1px;">Time Left</div>
+                        @if($daysLeft < 0)
+                            <div style="font-size: 1.1rem; font-weight: 800; color: #ef4444;">Expired</div>
+                        @elseif($daysLeft <= 7)
+                            <div style="font-size: 1.1rem; font-weight: 800; color: #f59e0b;">{{ ceil($daysLeft) }} Days</div>
+                        @else
+                            <div style="font-size: 1.1rem; font-weight: 800; color: #10b981;">{{ ceil($daysLeft) }} Days</div>
+                        @endif
+                    </div>
+                @endif
+            </div>
+        </div>
+      </div>
+      @endif
+
       <div class="stat-grid" id="dashStats">
         <div class="stat-card">
           <div class="stat-icon" style="background:#e6f0ff;color:#0066cc">

@@ -6,6 +6,13 @@
     <form method="POST" action="{{ route('register') }}" class="form-grid" style="display: flex; flex-direction: column; gap: 16px;">
         @csrf
 
+        @if(isset($ref_id))
+            <input type="hidden" name="ref_id" value="{{ $ref_id }}">
+        @endif
+        @if(isset($package_id))
+            <input type="hidden" name="package_id" value="{{ $package_id }}">
+        @endif
+
         <!-- Name -->
         <div class="form-group form-full">
             <label for="name">Name *</label>
@@ -35,8 +42,11 @@
         </div>
 
         <div class="form-actions" style="margin-top: 10px; display: flex; flex-direction: column; gap: 12px;">
-            <button type="submit" class="btn btn-primary btn-full" style="padding: 10px 0; font-size: 14px;">
-                {{ __('Register') }}
+            <button type="submit" name="type" value="store" class="btn btn-primary btn-full" style="padding: 10px 0; font-size: 14px;">
+                {{ __('Register as Store') }}
+            </button>
+            <button type="submit" name="type" value="seller" class="btn btn-full" style="padding: 10px 0; font-size: 14px; background: rgba(79,70,229,0.1); border: 1px solid #4f46e5; color: #4f46e5;">
+                {{ __('Register as Seller') }}
             </button>
 
             <a class="btn btn-ghost btn-full" href="{{ route('login') }}" style="text-align: center;">
