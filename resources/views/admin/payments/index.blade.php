@@ -44,7 +44,7 @@
                         </td>
                         <td>
                             @if($req->status === 'pending')
-                                <form action="{{ route('admin.payments.approve', $req->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Approve this payment and activate subscription?');">
+                                <form id="approve-form-{{ $req->id }}" action="{{ route('admin.payments.approve', $req->id) }}" method="POST" style="display:inline;" onsubmit="confirmApprove(event, {{ $req->id }})">
                                     @csrf
                                     <button type="submit" class="btn btn-sm" style="background:#10b981; color:#fff; padding:4px 8px; border-radius:4px; font-size:0.75rem; border:none; cursor:pointer;">Approve</button>
                                 </form>
@@ -145,5 +145,23 @@
     function closeRejectModal() {
         document.getElementById('rejectModalOverlay').classList.add('hidden');
     }
+
+    function confirmApprove(event, id) {
+        event.preventDefault();
+        Swal.fire({
+            title: 'Approve Payment?',
+            text: "This will instantly activate the store's subscription.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#10b981',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Yes, approve it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('approve-form-' + id).submit();
+            }
+        });
+    }
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @endsection

@@ -34,9 +34,11 @@ class CheckActiveSubscription
         if ($storeId) {
             $storeUser = $user->type === 'store' ? $user : \App\Models\User::find($storeId);
 
-            // 30-day grace period for new users
-            if ($storeUser && $storeUser->created_at && $storeUser->created_at->diffInDays(now()) < 30) {
-                return $next($request);
+            // 30-day grace period for new demo users
+            if ($storeUser && (!$storeUser->package_id || $storeUser->package_id == 1)) {
+                if ($storeUser->created_at && $storeUser->created_at->diffInDays(now()) < 30) {
+                    return $next($request);
+                }
             }
 
             $subscription = \App\Models\Subscription::where('user_id', $storeId)

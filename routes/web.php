@@ -11,6 +11,15 @@ use App\Http\Controllers\SaleController;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\ProfileController;
 
+Route::get('/install', [App\Http\Controllers\InstallController::class, 'index'])->name('install.index');
+Route::get('/install/database', [App\Http\Controllers\InstallController::class, 'database'])->name('install.database');
+Route::post('/install/database', [App\Http\Controllers\InstallController::class, 'postDatabase'])->name('install.database.post');
+Route::get('/install/purchase', [App\Http\Controllers\InstallController::class, 'purchase'])->name('install.purchase');
+Route::post('/install/purchase', [App\Http\Controllers\InstallController::class, 'postPurchase'])->name('install.purchase.post');
+Route::get('/install/admin', [App\Http\Controllers\InstallController::class, 'admin'])->name('install.admin');
+Route::post('/install/admin', [App\Http\Controllers\InstallController::class, 'postAdmin'])->name('install.admin.post');
+Route::get('/install/finish', [App\Http\Controllers\InstallController::class, 'finish'])->name('install.finish');
+
 Route::get('/', function () {
     $packages = \App\Models\Package::where('id', '!=', 1)->where('status', 'active')->orderBy('sort_order', 'asc')->get();
     return view('welcome', compact('packages')); 
@@ -89,7 +98,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 Route::middleware(['auth', 'role:seller'])->prefix('seller')->name('seller.')->group(function () {
     Route::get('/dashboard', function () {
         $packages = \App\Models\Package::where('status', 'active')->get();
-        return view('seller.dashboard', compact('packages'));
+        $stores = \App\Models\User::with(['package', 'subscriptions' => function($query) {
+            $query->latest();
+        }])->where('type', 'store')->where('parent_id', auth()->id())->get();
+        
+        return view('seller.dashboard', compact('packages', 'stores'));
     })->name('dashboard');
 });
 

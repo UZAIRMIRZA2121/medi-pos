@@ -50,6 +50,67 @@
             @endif
         </div>
     </div>
+
+    <div class="card" style="margin-top: 20px;">
+        <div class="card-header">
+            <h3>My Referred Stores</h3>
+            <p style="color: #64748b; font-size: 0.9rem; margin-top: 5px;">List of stores registered using your referral links.</p>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Store Name</th>
+                        <th>Email</th>
+                        <th>Package</th>
+                        <th>Status</th>
+                        <th>Joined Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($stores as $store)
+                        @php
+                            $sub = $store->subscriptions->first();
+                            $status = 'Demo / Grace Period';
+                            $badgeClass = 'badge-warning';
+                            $badgeStyle = 'background:#fef3c7; color:#92400e;';
+
+                            if ($sub && $sub->status === 'active') {
+                                if ($sub->end_date && now()->greaterThan($sub->end_date)) {
+                                    $status = 'Expired';
+                                    $badgeClass = 'badge-danger';
+                                    $badgeStyle = 'background:#fee2e2; color:#b91c1c;';
+                                } else {
+                                    $status = 'Active';
+                                    $badgeClass = 'badge-success';
+                                    $badgeStyle = 'background:#d1fae5; color:#065f46;';
+                                }
+                            } elseif ($sub && $sub->status === 'inactive') {
+                                $status = 'Inactive';
+                                $badgeClass = 'badge-danger';
+                                $badgeStyle = 'background:#fee2e2; color:#b91c1c;';
+                            }
+                        @endphp
+                        <tr>
+                            <td style="font-weight: 500;">{{ $store->name }}</td>
+                            <td>{{ $store->email }}</td>
+                            <td>{{ $store->package->name ?? 'None' }}</td>
+                            <td>
+                                <span class="badge {{ $badgeClass }}" style="{{ $badgeStyle }} padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">
+                                    {{ $status }}
+                                </span>
+                            </td>
+                            <td>{{ $store->created_at->format('M d, Y') }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="empty-cell" style="text-align: center; padding: 20px; color: #64748b;">You haven't referred any stores yet.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
