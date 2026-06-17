@@ -11,11 +11,18 @@
             </div>
         @endif
 
-        <div class="card">
+        @php
+            $stores = $users->where('type', 'store');
+            $sellers = $users->where('type', 'seller');
+            $others = $users->whereNotIn('type', ['store', 'seller', 'admin']);
+        @endphp
+
+        <!-- STORE ACCOUNTS -->
+        <div class="card" style="margin-bottom: 20px;">
             <div class="card-header">
-                <h3>User Management</h3>
+                <h3>Store Accounts</h3>
                 <div class="header-actions">
-                    <input type="text" class="input input-sm" id="userSearch" placeholder="Search users..."/>
+                    <input type="text" class="input input-sm userSearch" placeholder="Search stores..."/>
                 </div>
             </div>
             <div class="table-wrap">
@@ -24,23 +31,17 @@
                         <tr>
                             <th>Name</th>
                             <th>Email</th>
-                            <th>Role</th>
                             <th>Package</th>
                             <th>Sub Status</th>
-                            <th>Parent User</th>
+                            <th>Parent (Seller)</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="userTbody">
-                        @foreach($users as $user)
+                    <tbody class="userTbody">
+                        @foreach($stores as $user)
                         <tr>
                             <td>{{ $user->name }}</td>
                             <td>{{ $user->email }}</td>
-                            <td>
-                                <span style="padding: 2px 8px; border-radius: 12px; font-size: 0.85em; background: {{ $user->type === 'admin' ? '#ffebee' : '#e3f2fd' }}; color: {{ $user->type === 'admin' ? '#c62828' : '#1565c0' }};">
-                                    {{ ucfirst($user->type) }}
-                                </span>
-                            </td>
                             <td>{{ $user->package ? $user->package->name : ($user->package_id ?? '-') }}</td>
                             <td>
                                 @php
@@ -63,6 +64,56 @@
                             </td>
                         </tr>
                         @endforeach
+                        @if($stores->isEmpty())
+                        <tr><td colspan="6" style="text-align: center; padding: 15px; color: #64748b;">No store accounts found.</td></tr>
+                        @endif
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+
+        <!-- OTHER STAFF ACCOUNTS -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Store Staff (Pharmacists, Cashiers, etc)</h3>
+                <div class="header-actions">
+                    <input type="text" class="input input-sm userSearch" placeholder="Search staff..."/>
+                </div>
+            </div>
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Store (Parent)</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="userTbody">
+                        @foreach($others as $user)
+                        <tr>
+                            <td>{{ $user->name }}</td>
+                            <td>{{ $user->email }}</td>
+                            <td>
+                                <span style="padding: 2px 8px; border-radius: 12px; font-size: 0.85em; background: #e3f2fd; color: #1565c0;">
+                                    {{ ucfirst($user->type) }}
+                                </span>
+                            </td>
+                            <td>{{ $user->parent ? $user->parent->name : ($user->parent_id ?? '-') }}</td>
+                            <td>
+                                <button class="btn btn-ghost btn-sm" onclick="openEditUserModal({{ json_encode($user) }})">
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                </button>
+                            </td>
+                        </tr>
+                        @endforeach
+                        @if($others->isEmpty())
+                        <tr><td colspan="5" style="text-align: center; padding: 15px; color: #64748b;">No staff accounts found.</td></tr>
+                        @endif
                     </tbody>
                 </table>
             </div>
@@ -144,13 +195,19 @@
         document.getElementById('editUserModalOverlay').classList.add('hidden');
     }
 
-    // Simple search filtering
-    document.getElementById('userSearch').addEventListener('input', function(e) {
-        let term = e.target.value.toLowerCase();
-        let rows = document.querySelectorAll('#userTbody tr');
-        rows.forEach(row => {
-            let text = row.innerText.toLowerCase();
-            row.style.display = text.includes(term) ? '' : 'none';
+    // Independent search filtering for each table
+    document.querySelectorAll('.userSearch').forEach(function(searchInput) {
+        searchInput.addEventListener('input', function(e) {
+            let term = e.target.value.toLowerCase();
+            // Find the closest card, then the tbody inside it
+            let tbody = e.target.closest('.card').querySelector('.userTbody');
+            if (tbody) {
+                let rows = tbody.querySelectorAll('tr');
+                rows.forEach(row => {
+                    let text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(term) ? '' : 'none';
+                });
+            }
         });
     });
 

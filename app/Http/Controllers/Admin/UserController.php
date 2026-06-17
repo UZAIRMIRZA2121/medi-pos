@@ -15,10 +15,24 @@ class UserController extends Controller
      */
     public function index()
     {
-        // Get all users, potentially paginated if there are many. We'll use all for now as per POS scale, or paginate.
-        $users = User::with(['package', 'parent', 'subscriptions'])->latest()->get()->where('type', '!=', 'admin');
+        // Get non-seller users
+        $users = User::with(['package', 'parent', 'subscriptions'])
+            ->where('type', '!=', 'admin')
+            ->where('type', '!=', 'seller')
+            ->latest()
+            ->get();
         $packages = \App\Models\Package::orderBy('name')->get();
         return view('admin.users.index', compact('users', 'packages'));
+    }
+
+    public function sellers()
+    {
+        $sellers = User::with(['package', 'parent', 'subscriptions'])
+            ->where('type', 'seller')
+            ->latest()
+            ->get();
+        $packages = \App\Models\Package::orderBy('name')->get();
+        return view('admin.users.sellers', compact('sellers', 'packages'));
     }
 
     /**

@@ -76,7 +76,23 @@ Route::middleware(['auth', 'subscription.active'])->group(function () {
 
 // Admin Routes
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dashboard', function () {
+        $totalSales = \App\Models\PaymentRequest::join('packages', 'payment_requests.package_id', '=', 'packages.id')
+            ->where('payment_requests.status', 'approved')
+            ->sum('packages.price');
+            
+        $wallets = \App\Models\SellerWallet::all();
+        $totalCommissionPaid = $wallets->where('status', 'paid')->sum('c_amount');
+        $totalCommissionPending = $wallets->where('status', 'unpaid')->sum('c_amount');
+        $totalUsers = \App\Models\User::count();
+        $totalStores = \App\Models\User::where('type', 'store')->count();
+        $totalSellers = \App\Models\User::where('type', 'seller')->count();
+
+        return view('admin.dashboard', compact('totalSales', 'totalCommissionPaid', 'totalCommissionPending', 'totalUsers', 'totalStores', 'totalSellers'));
+    })->name('dashboard');
+
     Route::get('/users', [App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
+    Route::get('/sellers', [App\Http\Controllers\Admin\UserController::class, 'sellers'])->name('sellers.index');
     Route::put('/users/{user}', [App\Http\Controllers\Admin\UserController::class, 'update'])->name('users.update');
     Route::resource('packages', App\Http\Controllers\Admin\PackageController::class);
     Route::post('/users/{user}/toggle-subscription', [App\Http\Controllers\Admin\UserController::class, 'toggleSubscription'])->name('users.toggle-subscription');
