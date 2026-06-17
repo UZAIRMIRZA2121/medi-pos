@@ -25,6 +25,11 @@ class User extends Authenticatable
         'type',
         'package_id',
         'parent_id',
+        'profile_image',
+        'payout_method',
+        'payout_account_name',
+        'payout_account_number',
+        'payout_bank_name',
     ];
 
     /**

@@ -7,9 +7,9 @@
     <div class="page" id="page-dashboard">
     
       @if(isset($subscription) && $subscription)
-      <div class="card mb-4" style="border-left: 4px solid #4f46e5; background: linear-gradient(90deg, #f8faff 0%, #ffffff 100%);">
+      <div class="card mb-4" style="border-left: 4px solid #4f46e5; background: linear-gradient(90deg, #f8faff 0%, #ffffff 100%); margin-bottom: 20px">
         <div class="card-body" style="padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px;">
-            <div>
+            <div >
                 <h4 style="margin: 0; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 8px;">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#4f46e5" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                     Current Plan: {{ $subscription->package ? $subscription->package->name : 'Custom' }}
@@ -86,7 +86,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
           </div>
           <div>
-            <div class="stat-value">Rs. {{ number_format($todaySalesSum ?? 0, 2) }}</div>
+            <div class="stat-value">PKR {{ number_format($todaySalesSum ?? 0, 2) }}</div>
             <div class="stat-label">Today Sales</div>
           </div>
         </div>
@@ -115,7 +115,7 @@
                     <tr>
                       <td><span class="badge badge-primary" style="font-family:var(--mono)">{{ $sale->invoice_number }}</span></td>
                       <td>{{ $sale->customer ? $sale->customer->name : 'Walk-in' }}</td>
-                      <td style="font-weight:600;color:var(--primary)">Rs. {{ number_format($sale->grand_total, 2) }}</td>
+                      <td style="font-weight:600;color:var(--primary)">PKR {{ number_format($sale->grand_total, 2) }}</td>
                       <td>{{ $sale->created_at->format('d/m/Y') }}</td>
                       <td><span class="badge badge-success">Paid</span></td>
                     </tr>

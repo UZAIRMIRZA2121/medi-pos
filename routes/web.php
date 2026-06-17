@@ -85,18 +85,52 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::post('/payments/{paymentRequest}/approve', [App\Http\Controllers\Admin\PaymentRequestController::class, 'approve'])->name('payments.approve');
     Route::post('/payments/{paymentRequest}/reject', [App\Http\Controllers\Admin\PaymentRequestController::class, 'reject'])->name('payments.reject');
 
+    Route::get('/wallets', [App\Http\Controllers\Admin\SellerWalletController::class, 'index'])->name('wallets.index');
+    Route::post('/wallets/{wallet}/mark-paid', [App\Http\Controllers\Admin\SellerWalletController::class, 'markAsPaid'])->name('wallets.mark-paid');
+
 });
 
 // Seller Routes
 Route::middleware(['auth', 'role:seller'])->prefix('seller')->name('seller.')->group(function () {
     Route::get('/dashboard', function () {
         $packages = \App\Models\Package::where('status', 'active')->get();
+        
         $stores = \App\Models\User::with(['package', 'subscriptions' => function($query) {
             $query->latest();
         }])->where('type', 'store')->where('parent_id', auth()->id())->get();
-        
-        return view('seller.dashboard', compact('packages', 'stores'));
+
+        $wallets = \App\Models\SellerWallet::where('seller_id', auth()->id())->get();
+        $totalEarned = $wallets->sum('c_amount');
+        $totalPaid = $wallets->where('status', 'paid')->sum('c_amount');
+        $totalPending = $wallets->where('status', 'unpaid')->sum('c_amount');
+
+        return view('seller.dashboard', compact('packages', 'stores', 'totalEarned', 'totalPaid', 'totalPending'));
     })->name('dashboard');
+
+    Route::get('/commissions', function () {
+        $wallets = \App\Models\SellerWallet::with(['store', 'subscription.package'])
+            ->where('seller_id', auth()->id())
+            ->latest()
+            ->get();
+        return view('seller.commissions', compact('wallets'));
+    })->name('commissions');
+
+    Route::get('/payout-settings', function () {
+        return view('seller.payout');
+    })->name('payout');
+
+    Route::post('/payout-settings', function (\Illuminate\Http\Request $request) {
+        $request->validate([
+            'payout_method' => 'required|string',
+            'payout_account_name' => 'required|string',
+            'payout_account_number' => 'required|string',
+            'payout_bank_name' => 'nullable|string',
+        ]);
+
+        auth()->user()->update($request->only('payout_method', 'payout_account_name', 'payout_account_number', 'payout_bank_name'));
+
+        return back()->with('success', 'Payout settings updated successfully!');
+    })->name('payout.update');
 });
 
 require __DIR__.'/auth.php';

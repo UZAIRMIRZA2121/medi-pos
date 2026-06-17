@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <meta name="csrf-token" content="{{ csrf_token() }}">
-<title>MediPoint POS — Medical Store Management</title>
+<title>MediPos POS — Medical Store Management</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
@@ -36,7 +36,7 @@
 @endphp
 <script>
     window.printSettings = {
-        name: {!! json_encode($printSetting->name ?? 'MediPoint Pharmacy') !!},
+        name: {!! json_encode($printSetting->name ?? 'MediPos Pharmacy') !!},
         desc: {!! json_encode($printSetting->desc ?? "Shop #12, Main Market") !!},
         address: {!! json_encode($printSetting->address ?? "Faisalabad, Punjab, Pakistan\nPh: 041-1234567") !!},
         heading: {!! json_encode($printSetting->heading ?? 'INVOICE') !!},

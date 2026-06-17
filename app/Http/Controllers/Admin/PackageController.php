@@ -49,7 +49,7 @@ class PackageController extends Controller
             'billing_type' => 'required|in:monthly,yearly,one_time',
             'short_description' => 'nullable|string',
             'description' => 'nullable|string',
-            'trial_days' => 'required|integer|min:0',
+            'active_days' => 'required|integer|min:0',
             'status' => 'required|in:active,inactive',
             'sort_order' => 'required|integer',
             'is_cloud' => 'boolean',
@@ -58,6 +58,7 @@ class PackageController extends Controller
             'hosting_included' => 'boolean',
             'support_included' => 'boolean',
             'free_updates' => 'boolean',
+            'commission' => 'nullable|numeric|min:0',
         ]);
     }
 }

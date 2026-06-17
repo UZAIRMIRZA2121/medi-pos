@@ -26,6 +26,16 @@
                 @endif
                 Please upload a new payment proof to renew.
             </p>
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; padding: 12px; border-radius: 6px; font-size: 1.1rem; font-weight: 600; margin-top: 10px;">
+                Pending Amount: PKR {{ number_format($storeUser->package->price, 2) }}
+            </div>
+        @elseif($storeUser->package_id && $storeUser->package_id != 1)
+            <p style="color: #64748b; font-size: 0.9rem;">
+                You have selected the <strong>{{ $storeUser->package->name ?? 'Package' }}</strong>. Please complete your payment to activate it.
+            </p>
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a; padding: 12px; border-radius: 6px; font-size: 1.1rem; font-weight: 600; margin-top: 10px;">
+                Pending Amount: PKR {{ number_format($storeUser->package->price, 2) }}
+            </div>
         @else
             <p style="color: #64748b; font-size: 0.9rem;">Your store is currently locked because you do not have an active subscription.</p>
         @endif
@@ -103,7 +113,7 @@
                             <select name="package_id" class="input" required style="padding: 8px; width: 100%;">
                                 <option value="">-- Choose a Package --</option>
                                 @foreach($packages as $pkg)
-                                    <option value="{{ $pkg->id }}">{{ $pkg->name }} - {{ number_format($pkg->price, 2) }} / {{ str_replace('_', ' ', $pkg->billing_type) }}</option>
+                                    <option value="{{ $pkg->id }}">{{ $pkg->name }} - PKR {{ number_format($pkg->price, 2) }} / {{ str_replace('_', ' ', $pkg->billing_type) }}</option>
                                 @endforeach
                             </select>
                         </div>

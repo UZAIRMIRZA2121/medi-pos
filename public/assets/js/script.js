@@ -1,5 +1,5 @@
 // ============================================================
-// MediPoint POS - Main Script
+// MediPos POS - Main Script
 // ============================================================
 
 // ============================================================
@@ -251,7 +251,7 @@ function closeConfirmModal() { document.getElementById('confirmModal').classList
 // ============================================================
 // HELPERS
 // ============================================================
-function fmtCur(n) { return 'Rs. ' + Number(n).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function fmtCur(n) { return 'PKR ' + Number(n).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function fmtDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('en-GB'); }
 function fmtDateTime(d) { if (!d) return '-'; return new Date(d).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
 function daysDiff(dateStr) { return Math.ceil((new Date(dateStr) - new Date()) / 86400000); }
@@ -709,7 +709,7 @@ function buildInvoiceHTML(inv) {
 
   const custPhone = inv.custId ? (getCustomer(inv.custId).phone || '') : '';
 
-  const sName = window.printSettings?.name || 'MediPoint Pharmacy';
+  const sName = window.printSettings?.name || 'MediPos Pharmacy';
   const sDesc = (window.printSettings?.desc || "Shop #12, Main Market").replace(/\\n/g, '<br>');
   const sAddress = (window.printSettings?.address || "Faisalabad, Punjab, Pakistan\\nPh: 041-1234567").replace(/\\n/g, '<br>');
   const sHeading = window.printSettings?.heading || 'INVOICE';

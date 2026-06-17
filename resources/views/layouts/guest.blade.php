@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'MediPoint POS') }} - Authentication</title>
+    <title>{{ config('app.name', 'MediPos POS') }} - Authentication</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -50,7 +50,7 @@
             <div class="brand-icon">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="10"/></svg>
             </div>
-            <div class="brand-name">MediPoint</div>
+            <div class="brand-name">MediPos</div>
         </div>
 
         <div class="card">

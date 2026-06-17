@@ -10,8 +10,8 @@
     </div>
 
     <div class="card">
-        <div class="table-responsive">
-            <table class="table">
+        <div class="table-responsive" style="overflow-x: auto;">
+            <table class="table" style="min-width: 600px;">
                 <thead>
                     <tr>
                         <th>Date</th>
@@ -27,7 +27,7 @@
                     <tr>
                         <td>{{ $req->created_at->format('M d, Y H:i') }}</td>
                         <td style="font-weight:500;">{{ $req->user->name ?? 'Unknown' }}</td>
-                        <td>{{ $req->package->name ?? 'Unknown' }}</td>
+                        <td>{{ $req->package->name ?? 'Unknown' }} (PKR {{ $req->package->price ?? 'Unknown' }})</td>
                         <td>
                             @if($req->status === 'approved')
                                 <span class="badge badge-success" style="background:#d1fae5; color:#065f46; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">Approved</span>
@@ -83,7 +83,7 @@
           <div id="detailsFeedback" style="padding: 10px; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 4px; margin-top: 5px; font-size: 0.9rem; color: #b91c1c; white-space: pre-wrap;"></div>
       </div>
       <div style="text-align: center;">
-          <strong>Screenshot:</strong><br><br>
+          <strong>Payment Screenshot:</strong><br><br>
           <img id="detailsImage" src="" alt="Payment Receipt" style="max-width: 100%; border-radius: 8px; border: 1px solid #ccc;"/>
       </div>
     </div>

@@ -1,5 +1,5 @@
 /* ============================================================
-   MediPoint POS - Style Sheet
+   MediPos POS - Style Sheet
    Font: DM Sans + DM Mono | Theme: Clinical-Professional
    ============================================================ */
 
@@ -84,11 +84,11 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
+  height: 100dvh;
   position: fixed;
   left: 0; top: 0;
   z-index: 200;
   transition: transform var(--transition);
-  overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.1) transparent;
 }

@@ -9,8 +9,40 @@ class SubscriptionController extends Controller
     public function payment()
     {
         $user = auth()->user();
+        
+        if ($user->type === 'admin') {
+            return redirect()->route('admin.users.index');
+        }
+        if ($user->type === 'seller') {
+            return redirect()->route('seller.dashboard');
+        }
+
         $storeId = $user->type === 'store' ? $user->id : $user->parent_id;
         $storeUser = \App\Models\User::find($storeId);
+
+
+
+        // 30-day Free Trial Check
+        $isGracePeriod = false;
+        if ($storeUser) {
+            // Check if user was created within the last 30 days
+            if ($storeUser->created_at && $storeUser->created_at->addDays(30)->isFuture()) {
+                $isGracePeriod = true;
+            }
+        }
+
+        $lastSubscription = \App\Models\Subscription::where('user_id', $storeId)->latest()->first();
+
+        $isActive = false;
+        if ($lastSubscription && $lastSubscription->status === 'active') {
+            if (!$lastSubscription->end_date || now()->lessThanOrEqualTo($lastSubscription->end_date)) {
+                $isActive = true;
+            }
+        }
+
+        if ($isActive || $isGracePeriod) {
+            return redirect()->route('dashboard');
+        }
 
         $paymentRequest = \App\Models\PaymentRequest::where('user_id', $storeId)->latest()->first();
 
@@ -18,8 +50,6 @@ class SubscriptionController extends Controller
         if (!$storeUser->package_id || $storeUser->package_id == 1) {
             $packages = \App\Models\Package::where('id', '!=', 1)->where('status', 'active')->get();
         }
-
-        $lastSubscription = \App\Models\Subscription::where('user_id', $storeId)->latest()->first();
 
         return view('subscription.payment', compact('paymentRequest', 'packages', 'storeUser', 'lastSubscription'));
     }

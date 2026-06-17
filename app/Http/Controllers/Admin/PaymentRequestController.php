@@ -27,15 +27,16 @@ class PaymentRequestController extends Controller
 
         $package = $paymentRequest->package;
         $endDate = null;
-        if ($package && !$package->lifetime_license && $package->billing_type !== 'one_time') {
-            if ($package->billing_type === 'monthly') {
+        // if ($package && !$package->lifetime_license && $package->billing_type !== 'one_time') {
+            if ($package->active_days > 0) {
+                $endDate = now()->addDays($package->active_days);
+            } else {
+                // Fallback just in case active_days is 0 but it's not a lifetime license
                 $endDate = now()->addMonth();
-            } elseif ($package->billing_type === 'yearly') {
-                $endDate = now()->addYear();
             }
-        }
+        // }
 
-        Subscription::create([
+        $subscription = Subscription::create([
             'user_id' => $paymentRequest->user_id,
             'package_id' => $paymentRequest->package_id,
             'start_date' => now(),
@@ -44,7 +45,28 @@ class PaymentRequestController extends Controller
             'status' => 'active',
         ]);
 
-        return back()->with('success', 'Payment approved and subscription activated.');
+        // Generate seller commission if applicable (Only on First Payment)
+        $storeUser = $paymentRequest->user;
+        if ($storeUser && $storeUser->parent_id && $package && $package->commission > 0) {
+            $seller = \App\Models\User::find($storeUser->parent_id);
+            if ($seller && $seller->type === 'seller') {
+                // Check if seller already received commission for this store
+                $alreadyGenerated = \App\Models\SellerWallet::where('store_id', $storeUser->id)->exists();
+                
+                if (!$alreadyGenerated) {
+                    \App\Models\SellerWallet::create([
+                        'seller_id' => $seller->id,
+                        'store_id' => $storeUser->id,
+                        'subscription_id' => $subscription->id,
+                        'c_amount' => $package->commission,
+                        'status' => 'unpaid'
+                    ]);
+                }
+            }
+        }
+
+        $endDateString = $endDate ? $endDate->format('M d, Y') : 'Lifetime';
+        return back()->with('success', "Payment approved and subscription activated! The end date is now $endDateString.");
     }
 
     public function reject(Request $request, PaymentRequest $paymentRequest)

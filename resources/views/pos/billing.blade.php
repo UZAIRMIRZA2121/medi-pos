@@ -87,7 +87,7 @@
             <div class="card-header"><h3>Bill Summary</h3></div>
             <div class="summary-rows">
               <div class="sum-row"><span>Total Items</span><span id="sumItems">0</span></div>
-              <div class="sum-row"><span>Subtotal</span><span id="sumSubtotal">Rs. 0.00</span></div>
+              <div class="sum-row"><span>Subtotal</span><span id="sumSubtotal">PKR 0.00</span></div>
               <div class="sum-row">
                 <span>Discount (%)</span>
                 <input type="number" id="posDiscount" class="input input-sm" value="0" min="0" max="100" style="width:70px"/>
@@ -96,13 +96,13 @@
                 <span>Tax (%)</span>
                 <input type="number" id="posTax" class="input input-sm" value="0" min="0" max="100" style="width:70px"/>
               </div>
-              <div class="sum-row sum-total"><span>Grand Total</span><span id="sumGrandTotal">Rs. 0.00</span></div>
+              <div class="sum-row sum-total"><span>Grand Total</span><span id="sumGrandTotal">PKR 0.00</span></div>
               <div class="sum-row">
                 <span>Paid Amount</span>
                 <input type="number" id="posPaid" class="input input-sm" value="0" min="0" style="width:100px"/>
               </div>
-              <div class="sum-row"><span>Due Amount</span><span id="sumDue">Rs. 0.00</span></div>
-              <div class="sum-row"><span>Return Amount</span><span id="sumReturn">Rs. 0.00</span></div>
+              <div class="sum-row"><span>Due Amount</span><span id="sumDue">PKR 0.00</span></div>
+              <div class="sum-row"><span>Return Amount</span><span id="sumReturn">PKR 0.00</span></div>
             </div>
             <button class="btn btn-primary btn-full" id="checkoutBtn" onclick="checkout()">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 010-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 000-5C13 2 12 7 12 7z"/></svg>

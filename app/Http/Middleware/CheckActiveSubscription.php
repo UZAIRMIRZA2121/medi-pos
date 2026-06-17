@@ -34,9 +34,10 @@ class CheckActiveSubscription
         if ($storeId) {
             $storeUser = $user->type === 'store' ? $user : \App\Models\User::find($storeId);
 
-            // 30-day grace period for new demo users
-            if ($storeUser && (!$storeUser->package_id || $storeUser->package_id == 1)) {
-                if ($storeUser->created_at && $storeUser->created_at->diffInDays(now()) < 30) {
+            // 30-day grace period for ALL new users
+            if ($storeUser) {
+                // Check if user was created within the last 30 days
+                if ($storeUser->created_at && $storeUser->created_at->addDays(30)->isFuture()) {
                     return $next($request);
                 }
             }

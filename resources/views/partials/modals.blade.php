@@ -14,8 +14,8 @@
         <div class="form-group"><label>Company / Brand</label><input type="text" id="medCompany" class="input" placeholder="Manufacturer"/></div>
         <div class="form-group"><label>Batch Number</label><input type="text" id="medBatch" class="input"/></div>
         <div class="form-group"><label>Barcode</label><input type="text" id="medBarcode" class="input"/></div>
-        <div class="form-group"><label>Purchase Price (Rs.)</label><input type="number" id="medPurchase" class="input" min="0" step="0.01"/></div>
-        <div class="form-group"><label>Sale Price (Rs.) *</label><input type="number" id="medSale" class="input" min="0" step="0.01"/></div>
+        <div class="form-group"><label>Purchase Price (PKR)</label><input type="number" id="medPurchase" class="input" min="0" step="0.01"/></div>
+        <div class="form-group"><label>Sale Price (PKR) *</label><input type="number" id="medSale" class="input" min="0" step="0.01"/></div>
         <div class="form-group"><label>Stock Quantity *</label><input type="number" id="medStock" class="input" min="0"/></div>
         <div class="form-group"><label>Low Stock Level</label><input type="number" id="medLowStock" class="input" min="0" value="10"/></div>
         <div class="form-group"><label>Expiry Date *</label><input type="date" id="medExpiry" class="input"/></div>

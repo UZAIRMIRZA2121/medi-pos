@@ -1788,7 +1788,7 @@
     </div>
 
     <div class="footer-bottom">
-      <p class="footer-copy">© 2025 <span>MediPOS</span>. All rights reserved. Made with <i class="bi bi-heart-fill" style="color:#f87171;"></i> in Pakistan.</p>
+      <p class="footer-copy">© 2026 <span>MediPOS</span>. All rights reserved. Made with <i class="bi bi-heart-fill" style="color:#f87171;"></i> in Pakistan.</p>
       <div class="d-flex gap-3">
         <a href="#" class="footer-link mb-0" style="font-size:0.8rem;">Privacy</a>
         <a href="#" class="footer-link mb-0" style="font-size:0.8rem;">Terms</a>

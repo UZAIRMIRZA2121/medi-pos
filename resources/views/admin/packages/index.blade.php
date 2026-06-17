@@ -11,12 +11,13 @@
     </div>
 
     <div class="card">
-        <div class="table-responsive">
-            <table class="table">
+        <div class="table-responsive" style="overflow-x: auto;">
+            <table class="table" style="min-width: 600px;">
                 <thead>
                     <tr>
                         <th>Name</th>
                         <th>Price</th>
+                        <th>Commission</th>
                         <th>Billing</th>
                         <th>Trial</th>
                         <th>Status</th>
@@ -27,9 +28,10 @@
                     @foreach($packages as $package)
                     <tr>
                         <td style="font-weight:500;">{{ $package->name }}</td>
-                        <td>{{ number_format($package->price, 2) }}</td>
+                        <td>PKR {{ number_format($package->price, 2) }}</td>
+                        <td>PKR {{ number_format($package->commission, 2) }}</td>
                         <td style="text-transform: capitalize;">{{ str_replace('_', ' ', $package->billing_type) }}</td>
-                        <td>{{ $package->trial_days }} days</td>
+                        <td>{{ $package->active_days }} days</td>
                         <td>
                             @if($package->status === 'active')
                                 <span class="badge badge-success">Active</span>
@@ -86,6 +88,11 @@
             </div>
             
             <div class="form-group">
+                <label>Commission Amount</label>
+                <input type="number" step="0.01" name="commission" id="packageCommission" class="input" value="0">
+            </div>
+            
+            <div class="form-group">
                 <label>Billing Type *</label>
                 <select name="billing_type" id="packageBillingType" class="input" required>
                     <option value="monthly">Monthly</option>
@@ -95,8 +102,8 @@
             </div>
 
             <div class="form-group">
-                <label>Trial Days</label>
-                <input type="number" name="trial_days" id="packageTrialDays" class="input" value="0" required>
+                <label>Active Days</label>
+                <input type="number" name="active_days" id="packageTrialDays" class="input" value="0" required>
             </div>
 
             <div class="form-group">
@@ -171,8 +178,9 @@ function openPackageModal(package = null) {
         
         document.getElementById('packageName').value = package.name;
         document.getElementById('packagePrice').value = package.price;
+        document.getElementById('packageCommission').value = package.commission || 0;
         document.getElementById('packageBillingType').value = package.billing_type;
-        document.getElementById('packageTrialDays').value = package.trial_days;
+        document.getElementById('packageTrialDays').value = package.active_days;
         document.getElementById('packageStatus').value = package.status;
         document.getElementById('packageShortDesc').value = package.short_description || '';
         document.getElementById('packageSortOrder').value = package.sort_order;
