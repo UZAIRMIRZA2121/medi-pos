@@ -99,6 +99,33 @@
             <div class="stat-label">Total Invoices</div>
           </div>
         </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#e0e7ff;color:#4338ca">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div>
+            <div class="stat-value">PKR {{ number_format($totalSales ?? 0, 2) }}</div>
+            <div class="stat-label">Total Sales</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#fee2e2;color:#dc2626">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          </div>
+          <div>
+            <div class="stat-value">PKR {{ number_format($totalExpense ?? 0, 2) }}</div>
+            <div class="stat-label">Total Expense</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:#dcfce7;color:#15803d">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div>
+            <div class="stat-value">PKR {{ number_format($totalEarning ?? 0, 2) }}</div>
+            <div class="stat-label">Total Earning</div>
+          </div>
+        </div>
       </div>
       <div class="dash-grid">
         <div class="card">
@@ -149,8 +176,8 @@
               @if(isset($expiringItems) && count($expiringItems) > 0)
                   @foreach($expiringItems as $item)
                   <div class="alert-item">
-                    <div><div class="name">{{ $item->name }}</div><div class="meta">Expires in {{ now()->diffInDays($item->expiry_date) }} days</div></div>
-                    <span class="badge badge-warning">{{ now()->diffInDays($item->expiry_date) }}d</span>
+                    <div><div class="name">{{ $item->name }}</div><div class="meta">Expires in {{ (int) ceil(now()->diffInDays(\Carbon\Carbon::parse($item->expiry_date))) }} days</div></div>
+                    <span class="badge badge-warning">{{ (int) ceil(now()->diffInDays(\Carbon\Carbon::parse($item->expiry_date))) }}d</span>
                   </div>
                   @endforeach
               @else

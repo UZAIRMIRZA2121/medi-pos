@@ -45,7 +45,7 @@ Route::middleware(['auth', 'role:store', 'subscription.active'])->group(function
     Route::resource('medicines', App\Http\Controllers\MedicineController::class);
     Route::resource('suppliers', App\Http\Controllers\SupplierController::class);
     Route::resource('customers', App\Http\Controllers\CustomerController::class);
-    
+    Route::resource('expenses', App\Http\Controllers\ExpenseController::class)->except(['create', 'show', 'edit']);
     Route::get('/sales', [App\Http\Controllers\SaleController::class, 'index'])->name('sales.index');
     Route::get('/invoices', [App\Http\Controllers\SaleController::class, 'invoices'])->name('invoices.index');
     Route::get('/alerts', [App\Http\Controllers\AlertController::class, 'index'])->name('alerts.index');

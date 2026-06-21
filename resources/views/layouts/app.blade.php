@@ -40,7 +40,7 @@
         desc: {!! json_encode($printSetting->desc ?? "Shop #12, Main Market") !!},
         address: {!! json_encode($printSetting->address ?? "Faisalabad, Punjab, Pakistan\nPh: 041-1234567") !!},
         heading: {!! json_encode($printSetting->heading ?? 'INVOICE') !!},
-        footer: {!! json_encode($printSetting->footer ?? "*** Thank You! ***\nGet well soon. Visit again.\nKeep medicines away from children.\nStore as directed on packaging.") !!},
+        footer: {!! json_encode($printSetting->footer ?? "*** Thank You! ***\nGet well soon. Visit again.") !!},
         logo: {!! json_encode($printSetting->logo ?? null) !!}
     };
 </script>

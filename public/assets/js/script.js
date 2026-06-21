@@ -253,7 +253,7 @@ function closeConfirmModal() { document.getElementById('confirmModal').classList
 // ============================================================
 function fmtCur(n) { return 'PKR ' + Number(n).toLocaleString('en-PK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function fmtDate(d) { if (!d) return '-'; return new Date(d).toLocaleDateString('en-GB'); }
-function fmtDateTime(d) { if (!d) return '-'; return new Date(d).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); }
+function fmtDateTime(d) { if (!d) return '-'; return new Date(d).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }).toUpperCase(); }
 function daysDiff(dateStr) { return Math.ceil((new Date(dateStr) - new Date()) / 86400000); }
 function isExpired(d) { return new Date(d) < new Date(); }
 function isLowStock(m) { return m.stock <= m.lowStock; }
@@ -613,14 +613,14 @@ function closeInvoiceModal() { document.getElementById('invoiceModal').classList
 
 // Thermal receipt CSS — 80mm roll width (~302px usable)
 const THERMAL_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;700&display=swap');
   * { box-sizing: border-box; margin: 0; padding: 0; }
   @page { size: 80mm auto; margin: 4mm 3mm; }
   body { background: #fff; }
   .receipt {
     width: 76mm;
-    font-family: 'DM Mono', 'Courier New', monospace;
-    font-size: 11px;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    font-weight: normal;
     color: #000;
     background: #fff;
     padding: 0;
@@ -629,71 +629,71 @@ const THERMAL_CSS = `
   .r-center { text-align: center; }
   .r-logo {
     width: 42px; height: 42px;
-    background: #000;
+    background: #000 !important;
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     margin: 0 auto 6px;
-    color: #fff;
+    color: #fff !important;
     font-size: 18px;
-    font-weight: 700;
-    font-family: 'DM Sans', sans-serif;
+    font-weight: normal;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
   .r-store-name {
-    font-family: 'DM Sans', sans-serif;
-    font-size: 15px;
-    font-weight: 700;
+    font-size: 24px;
+    font-weight: normal;
     letter-spacing: 0.5px;
     margin-bottom: 2px;
   }
-  .r-store-sub { font-size: 9.5px; color: #444; line-height: 1.6; }
-  .r-divider { border: none; border-top: 1px dashed #999; margin: 6px 0; }
+  .r-store-sub { font-size: 13px; font-weight: normal; color: #000; line-height: 1.6; }
+  .r-divider { border: none; border-top: 1px dashed #000; margin: 6px 0; }
   .r-divider-solid { border: none; border-top: 1px solid #000; margin: 5px 0; }
   .r-divider-double { border: none; border-top: 2px solid #000; margin: 5px 0; }
-  .r-row { display: flex; justify-content: space-between; font-size: 10.5px; padding: 1px 0; }
-  .r-row .label { color: #555; }
-  .r-row .val { font-weight: 500; }
-  .r-inv-num { font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+  .r-row { display: flex; justify-content: space-between; font-size: 13px; font-weight: normal; padding: 1px 0; }
+  .r-row .label { color: #000; }
+  .r-row .val { font-weight: normal; }
+  .r-inv-num { font-size: 14px; font-weight: normal; letter-spacing: 1px; }
   /* Items table */
   .r-items { width: 100%; border-collapse: collapse; margin: 4px 0; }
   .r-items thead tr { border-bottom: 1px solid #000; border-top: 1px solid #000; }
   .r-items th {
-    font-size: 9.5px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: normal;
     padding: 3px 2px;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    font-family: 'DM Sans', sans-serif;
   }
   .r-items th:last-child, .r-items td:last-child { text-align: right; }
   .r-items th:nth-child(2), .r-items td:nth-child(2) { text-align: center; }
   .r-items th:nth-child(3), .r-items td:nth-child(3) { text-align: right; }
   .r-items td {
-    font-size: 10px;
+    font-size: 13px;
+    font-weight: normal;
     padding: 3px 2px;
     vertical-align: top;
-    border-bottom: 1px dashed #ddd;
+    border-bottom: 1px dashed #666;
   }
   .r-items tbody tr:last-child td { border-bottom: none; }
-  .r-item-name { font-size: 10.5px; font-weight: 500; line-height: 1.3; }
+  .r-item-name { font-size: 13px; font-weight: normal; line-height: 1.3; }
   /* Totals */
-  .r-totals { width: 100%; font-size: 10.5px; margin-top: 2px; }
+  .r-totals { width: 100%; font-size: 13px; font-weight: normal; margin-top: 2px; }
   .r-totals td { padding: 2px 0; }
-  .r-totals td:last-child { text-align: right; font-weight: 500; }
-  .r-grand { font-size: 13px; font-weight: 700; font-family: 'DM Sans', sans-serif; }
-  .r-grand td:last-child { font-size: 13px; font-weight: 700; }
+  .r-totals td:last-child { text-align: right; font-weight: normal; }
+  .r-grand { font-size: 16px; font-weight: normal; }
+  .r-grand td:last-child { font-size: 16px; font-weight: normal; }
   /* Paid / Due */
-  .r-paid { font-size: 11px; }
-  .r-due { color: #c00; font-weight: 700; }
-  .r-ret { color: #080; font-weight: 700; }
+  .r-paid { font-size: 14px; font-weight: normal; }
+  .r-due { color: #000; font-weight: normal; }
+  .r-ret { color: #000; font-weight: normal; }
   /* Notes */
-  .r-notes { font-size: 9.5px; color: #444; border-left: 2px solid #999; padding-left: 5px; margin: 4px 0; }
+  .r-notes { font-size: 12px; font-weight: normal; color: #000; border-left: 2px solid #000; padding-left: 5px; margin: 4px 0; }
   /* Footer */
-  .r-footer { text-align: center; font-size: 9.5px; color: #555; margin-top: 4px; line-height: 1.7; }
-  .r-footer .r-thanks { font-family: 'DM Sans', sans-serif; font-size: 11px; font-weight: 700; color: #000; }
-  .r-barcode { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 2px; color: #888; }
+  .r-footer { text-align: center; font-size: 13px; font-weight: normal; color: #000; margin-top: 4px; line-height: 1.7; }
+  .r-footer .r-thanks { font-size: 10px; font-weight: bold; color: #000; }
+  .r-barcode { font-family: 'Courier New', Courier, monospace; font-size: 12px; font-weight: normal; letter-spacing: 2px; color: #000; }
   @media print {
     @page { size: 80mm auto; margin: 3mm; }
-    body { margin: 0; }
+    body { margin: 0; font-smooth: never; -webkit-font-smoothing: none; }
   }
 `;
 
@@ -713,7 +713,7 @@ function buildInvoiceHTML(inv) {
   const sDesc = (window.printSettings?.desc || "Shop #12, Main Market").replace(/\\n/g, '<br>');
   const sAddress = (window.printSettings?.address || "Faisalabad, Punjab, Pakistan\\nPh: 041-1234567").replace(/\\n/g, '<br>');
   const sHeading = window.printSettings?.heading || 'INVOICE';
-  const sFooter = (window.printSettings?.footer || "*** Thank You! ***\\nGet well soon. Visit again.\\nKeep medicines away from children.\\nStore as directed on packaging.").replace(/\\n/g, '<br>');
+ const sFooter = (window.printSettings?.footer || "Thank You!\nGet Well Soon.").replace(/\n/g, '<br>');
   const sLogo = window.printSettings?.logo ? `<img src="${window.printSettings.logo}" style="max-height:40px; margin-bottom: 5px;">` : `<div class="r-logo">${sName.charAt(0)}</div>`;
 
   return `<div class="receipt" id="invoicePrintArea">
@@ -788,9 +788,11 @@ function buildInvoiceHTML(inv) {
 
     <!-- Footer -->
     <div class="r-footer">
-      ${sFooter}<br>
-      <br>
-      <span class="r-barcode">${inv.id}</span>
+      <div class="r-thanks">${sFooter}</div>
+      <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dotted #999; font-size: 11px; color: #444;">
+        Developed with &hearts; by <strong>Uzair Mirza</strong><br>
+       <span style="font-size: 14px; color: #000;">0308-6452242</span>
+      </div>
     </div>
 
     <div style="height:12px"></div>
@@ -802,7 +804,7 @@ function printInvoice() {
   const win = window.open('', '_blank', 'width=340,height=700');
   win.document.write(`<!DOCTYPE html><html><head><title>Receipt — ${document.getElementById('invoicePrintArea')?.querySelector?.('.r-inv-num')?.textContent || 'Invoice'}</title><style>${THERMAL_CSS}</style></head><body>${content}</body></html>`);
   win.document.close();
-  setTimeout(() => win.print(), 400);
+  setTimeout(() => win.print(), 800);
 }
 
 // ============================================================

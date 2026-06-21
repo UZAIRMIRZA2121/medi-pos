@@ -21,6 +21,10 @@ class DashboardController extends Controller
         $todaySalesSum = Sale::whereDate('created_at', Carbon::today())->sum('grand_total');
         $totalInvoices = Sale::count();
         
+        $totalSales = Sale::sum('grand_total');
+        $totalExpense = \App\Models\Expense::where('store_id', auth()->id())->sum('amount');
+        $totalEarning = $totalSales - $totalExpense;
+        
         $recentSales = Sale::with('customer')->orderBy('created_at', 'desc')->take(8)->get();
         
         $lowStockItems = Medicine::whereColumn('stock_quantity', '<=', 'low_stock_level')->take(5)->get();
@@ -39,7 +43,7 @@ class DashboardController extends Controller
         return view('dashboard.index', compact(
             'totalMedicines', 'totalCategories', 'lowStockCount', 'expiredCount',
             'todaySalesSum', 'totalInvoices', 'recentSales', 'lowStockItems', 'expiringItems',
-            'subscription'
+            'subscription', 'totalSales', 'totalExpense', 'totalEarning'
         ));
     }
 }
