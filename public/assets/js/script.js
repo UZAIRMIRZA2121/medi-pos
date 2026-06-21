@@ -810,11 +810,50 @@ function printInvoice() {
 // ============================================================
 // INVOICES PAGE
 // ============================================================
+function setInvoiceDateRange(type) {
+  const d = new Date();
+  let start, end;
+  if (type === 'thisMonth') {
+    start = new Date(d.getFullYear(), d.getMonth(), 1);
+    end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  } else if (type === 'lastMonth') {
+    start = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+    end = new Date(d.getFullYear(), d.getMonth(), 0);
+  }
+  
+  const formatYMD = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  
+  if (document.getElementById('invoiceStartDate')) {
+    document.getElementById('invoiceStartDate').value = formatYMD(start);
+    document.getElementById('invoiceEndDate').value = formatYMD(end);
+    renderInvoices();
+  }
+}
+
 function renderInvoices() {
   const q = (document.getElementById('invoiceSearch')?.value || '').toLowerCase();
-  const list = store.get('invoices').filter(i =>
-    !q || i.id.toLowerCase().includes(q) || i.custName.toLowerCase().includes(q)
-  ).sort((a, b) => new Date(b.date) - new Date(a.date));
+  const startStr = document.getElementById('invoiceStartDate')?.value;
+  const endStr = document.getElementById('invoiceEndDate')?.value;
+  
+  const startD = startStr ? new Date(startStr) : null;
+  if (startD) startD.setHours(0, 0, 0, 0);
+  const endD = endStr ? new Date(endStr) : null;
+  if (endD) endD.setHours(23, 59, 59, 999);
+
+  const list = store.get('invoices').filter(i => {
+    const iDate = new Date(i.date);
+    let matchDate = true;
+    if (startD && iDate < startD) matchDate = false;
+    if (endD && iDate > endD) matchDate = false;
+    
+    let matchText = !q || i.id.toLowerCase().includes(q) || i.custName.toLowerCase().includes(q);
+    return matchDate && matchText;
+  }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
   document.getElementById('invoicesTbody').innerHTML = list.length ?
     list.map(i => `<tr>
@@ -856,12 +895,52 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================================
 // SALES PAGE
 // ============================================================
+function setSalesDateRange(type) {
+  const d = new Date();
+  let start, end;
+  if (type === 'thisMonth') {
+    start = new Date(d.getFullYear(), d.getMonth(), 1);
+    end = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  } else if (type === 'lastMonth') {
+    start = new Date(d.getFullYear(), d.getMonth() - 1, 1);
+    end = new Date(d.getFullYear(), d.getMonth(), 0);
+  }
+  
+  const formatYMD = (date) => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+  
+  if (document.getElementById('salesStartDate')) {
+    document.getElementById('salesStartDate').value = formatYMD(start);
+    document.getElementById('salesEndDate').value = formatYMD(end);
+    renderSales();
+  }
+}
+
 function renderSales() {
   const q = (document.getElementById('salesSearch')?.value || '').toLowerCase();
-  const dateFilter = document.getElementById('salesDateFilter')?.value;
+  const startStr = document.getElementById('salesStartDate')?.value;
+  const endStr = document.getElementById('salesEndDate')?.value;
+  
+  const startD = startStr ? new Date(startStr) : null;
+  if (startD) startD.setHours(0, 0, 0, 0);
+  const endD = endStr ? new Date(endStr) : null;
+  if (endD) endD.setHours(23, 59, 59, 999);
+
   let list = store.get('invoices');
-  if (q) list = list.filter(i => i.custName.toLowerCase().includes(q));
-  if (dateFilter) list = list.filter(i => i.date.startsWith(dateFilter));
+  if (q) list = list.filter(i => i.custName.toLowerCase().includes(q) || i.id.toLowerCase().includes(q));
+  
+  list = list.filter(i => {
+    const iDate = new Date(i.date);
+    let matchDate = true;
+    if (startD && iDate < startD) matchDate = false;
+    if (endD && iDate > endD) matchDate = false;
+    return matchDate;
+  });
+
   list.sort((a, b) => new Date(b.date) - new Date(a.date));
 
   document.getElementById('salesTbody').innerHTML = list.length ?
@@ -881,6 +960,159 @@ function renderSales() {
       </td>
     </tr>`).join('') :
     '<tr><td colspan="11" class="empty-cell">No sales found</td></tr>';
+}
+
+async function printSalesSummary() {
+  const startStr = document.getElementById('salesStartDate')?.value;
+  const endStr = document.getElementById('salesEndDate')?.value;
+  
+  const startD = startStr ? new Date(startStr) : null;
+  if (startD) startD.setHours(0, 0, 0, 0);
+  const endD = endStr ? new Date(endStr) : null;
+  if (endD) endD.setHours(23, 59, 59, 999);
+
+  // Filter Sales
+  let sales = store.get('invoices');
+  sales = sales.filter(i => {
+    const iDate = new Date(i.date);
+    let matchDate = true;
+    if (startD && iDate < startD) matchDate = false;
+    if (endD && iDate > endD) matchDate = false;
+    return matchDate;
+  });
+
+  const allMeds = store.get('medicines');
+  let totalSale = 0;
+  let totalCostOfGoods = 0;
+  const medsSold = {};
+
+  sales.forEach(sale => {
+    totalSale += Number(sale.grand || 0);
+    
+    // We also need to factor in discounts and tax into profit, but for exact profit, 
+    // it's easier to calculate total purchase cost of items sold, and subtract from final revenue.
+    sale.items.forEach(item => {
+      if (!medsSold[item.name]) medsSold[item.name] = 0;
+      const qty = Number(item.qty || 0);
+      medsSold[item.name] += qty;
+      
+      const med = allMeds.find(m => m.id == item.medId);
+      if (med && med.purchase) {
+        totalCostOfGoods += Number(med.purchase) * qty;
+      }
+    });
+  });
+
+  // Open window immediately to avoid popup blocker
+  const printWin = window.open('', '_blank', 'width=400,height=600');
+  if (!printWin) {
+    alert("Please allow pop-ups to print the summary!");
+    return;
+  }
+  printWin.document.open();
+  printWin.document.write('<div style="font-family:sans-serif;text-align:center;margin-top:50px;">Generating summary, please wait...</div>');
+
+  // Fetch and filter Expenses
+  let totalExpense = 0;
+  try {
+    const res = await fetch('/api/expenses');
+    if (res.ok) {
+      const expenses = await res.json();
+      expenses.forEach(exp => {
+        const expDate = new Date(exp.paid_at || exp.created_at);
+        let matchDate = true;
+        if (startD && expDate < startD) matchDate = false;
+        if (endD && expDate > endD) matchDate = false;
+        if (exp.status === 'paid' && matchDate) {
+          totalExpense += Number(exp.amount || 0);
+        }
+      });
+    }
+  } catch (err) {
+    console.error("Error fetching expenses", err);
+  }
+
+  const grossProfit = totalSale - totalCostOfGoods;
+  const netProfit = grossProfit - totalExpense;
+
+  let medsHTML = '';
+  // Sort medicines by count descending
+  const sortedMeds = Object.entries(medsSold).sort((a, b) => b[1] - a[1]);
+  
+  for (const [name, qty] of sortedMeds) {
+    medsHTML += `
+      <div style="display:flex; justify-content:space-between; margin-bottom: 4px;">
+        <span style="font-size: 13px;">${name}</span>
+        <span style="font-size: 13px; font-weight: bold;">${qty}</span>
+      </div>
+    `;
+  }
+
+  if (!medsHTML) medsHTML = '<div style="font-size:12px; color:#666;">No medicines sold in this period.</div>';
+
+  const dateRangeStr = (startStr || endStr) 
+    ? `${startStr ? startStr : 'Beginning'} to ${endStr ? endStr : 'Today'}`
+    : 'All Time';
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Sales Summary</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        @page { size: 80mm auto; margin: 4mm 3mm; }
+        body { background: #fff; width: 76mm; padding: 0; color: #000; font-size: 13px; }
+        .center { text-align: center; }
+        h2 { font-size: 20px; font-weight: normal; margin-bottom: 5px; }
+        .date { font-size: 11px; color: #444; margin-bottom: 15px; border-bottom: 1px dashed #000; padding-bottom: 5px; }
+        .row { display: flex; justify-content: space-between; margin-bottom: 6px; }
+        .total-row { display: flex; justify-content: space-between; margin-top: 10px; padding-top: 10px; border-top: 2px dashed #000; font-size: 16px; font-weight: bold; }
+        .profit-row { display: flex; justify-content: space-between; margin-top: 5px; padding: 10px 0; border-top: 1px dashed #000; border-bottom: 1px dashed #000; font-size: 18px; font-weight: bold; }
+        .meds-header { font-weight: bold; font-size: 14px; margin-top: 15px; margin-bottom: 8px; text-decoration: underline; }
+      </style>
+    </head>
+    <body onload="setTimeout(function(){ window.print(); window.close(); }, 500);">
+      <div class="center">
+        <h2>Sales Summary</h2>
+        <div class="date">${dateRangeStr}</div>
+      </div>
+      
+      <div class="row">
+        <span>Total Sales (Revenue)</span>
+        <span>PKR ${totalSale.toFixed(2)}</span>
+      </div>
+      <div class="row">
+        <span>Total Purchase Cost</span>
+        <span>PKR ${totalCostOfGoods.toFixed(2)}</span>
+      </div>
+      <div class="row" style="font-weight:bold; margin-top:5px; margin-bottom:10px;">
+        <span>Gross Profit</span>
+        <span>PKR ${grossProfit.toFixed(2)}</span>
+      </div>
+      <div class="row">
+        <span>Total Expenses</span>
+        <span>PKR ${totalExpense.toFixed(2)}</span>
+      </div>
+      
+      <div class="profit-row">
+        <span>Net Profit</span>
+        <span>PKR ${netProfit.toFixed(2)}</span>
+      </div>
+
+      <div class="meds-header">Medicines Sold (By Count)</div>
+      ${medsHTML}
+      
+      <div class="center" style="margin-top: 20px; font-size: 11px; color: #555;">
+        Printed on: ${new Date().toLocaleString()}
+      </div>
+    </body>
+    </html>
+  `;
+
+  printWin.document.open();
+  printWin.document.write(html);
+  printWin.document.close();
 }
 
 function exportSalesCSV() {

@@ -72,6 +72,7 @@ Route::middleware(['auth', 'subscription.active'])->group(function () {
     Route::get('/api/suppliers', [App\Http\Controllers\SupplierController::class, 'apiIndex']);
     Route::get('/api/customers', [App\Http\Controllers\CustomerController::class, 'apiIndex']);
     Route::get('/api/sales', [App\Http\Controllers\SaleController::class, 'apiIndex']);
+    Route::get('/api/expenses', [App\Http\Controllers\ExpenseController::class, 'apiIndex']);
 });
 
 // Admin Routes

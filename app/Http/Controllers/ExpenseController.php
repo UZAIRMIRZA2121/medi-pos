@@ -89,4 +89,9 @@ class ExpenseController extends Controller
 
         return redirect()->route('expenses.index')->with('success', 'Expense deleted successfully.');
     }
+    public function apiIndex()
+    {
+        $expenses = Expense::where('store_id', Auth::id())->latest()->get();
+        return response()->json($expenses);
+    }
 }

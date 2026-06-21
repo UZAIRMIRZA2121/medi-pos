@@ -8,8 +8,12 @@
       <div class="card">
         <div class="card-header">
           <h3>Invoice History</h3>
-          <div class="header-actions">
-            <input type="text" class="input input-sm" id="invoiceSearch" placeholder="Search invoice or customer..."/>
+          <div class="header-actions" style="display: flex; gap: 5px; flex-wrap: wrap;">
+            <input type="date" class="input input-sm" id="invoiceStartDate" onchange="renderInvoices()" title="Start Date" />
+            <input type="date" class="input input-sm" id="invoiceEndDate" onchange="renderInvoices()" title="End Date" />
+            <button class="btn btn-sm btn-outline" onclick="setInvoiceDateRange('thisMonth')">This Month</button>
+            <button class="btn btn-sm btn-outline" onclick="setInvoiceDateRange('lastMonth')">Last Month</button>
+            <input type="text" class="input input-sm" id="invoiceSearch" oninput="renderInvoices()" placeholder="Search invoice or customer..."/>
           </div>
         </div>
         <div class="table-wrap">
