@@ -1049,3 +1049,8 @@ select.input { cursor: pointer; }
 .page-content::-webkit-scrollbar { width: 6px; }
 .page-content::-webkit-scrollbar-track { background: transparent; }
 .page-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
+
+/* POS FULLSCREEN MODE */
+body.pos-fullscreen .sidebar { display: none !important; }
+body.pos-fullscreen .main-wrapper { margin-left: 0 !important; }
+body.pos-fullscreen .topbar .menu-btn { display: none !important; }

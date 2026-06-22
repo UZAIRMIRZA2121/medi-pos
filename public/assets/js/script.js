@@ -1578,6 +1578,79 @@ function renderAlerts() {
     '<tr><td colspan="5" class="empty-cell">No low stock medicines</td></tr>';
 }
 
+function printAlerts() {
+  const meds = store.get('medicines');
+  const cats = store.get('categories');
+  const catName = id => (cats.find(c => c.id == id) || {}).name || '-';
+
+  const expired = meds.filter(m => isExpired(m.expiry));
+  const expiringSoon = meds.filter(m => { const d = daysDiff(m.expiry); return d >= 0 && d <= 30; });
+  const lowStock = meds.filter(m => isLowStock(m));
+
+  let html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Alerts Summary Report</title>
+      <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+        @page { size: auto; margin: 10mm; }
+        body { background: #fff; padding: 20px; color: #000; font-size: 13px; }
+        .center { text-align: center; }
+        h2 { font-size: 20px; font-weight: bold; margin-bottom: 5px; }
+        h3 { font-size: 16px; margin-top: 20px; margin-bottom: 10px; border-bottom: 1px solid #000; padding-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        th, td { border: 1px solid #ccc; padding: 6px; text-align: left; }
+        th { background: #eee; font-weight: bold; }
+      </style>
+    </head>
+    <body onload="setTimeout(function(){ window.print(); window.close(); }, 500);">
+      <div class="center">
+        <h2>Alerts Summary Report</h2>
+        <div style="font-size:11px; color:#444;">Printed on: ${new Date().toLocaleString()}</div>
+      </div>
+  `;
+
+  if (expired.length) {
+    html += '<h3>Expired Medicines</h3><table><tr><th>Medicine</th><th>Category</th><th>Stock</th><th>Expiry</th><th>Days Ago</th></tr>';
+    expired.forEach(m => {
+      html += '<tr><td>' + m.name + '</td><td>' + catName(m.catId) + '</td><td>' + m.stock + '</td><td>' + fmtDate(m.expiry) + '</td><td>' + Math.abs(daysDiff(m.expiry)) + '</td></tr>';
+    });
+    html += '</table>';
+  }
+
+  if (expiringSoon.length) {
+    html += '<h3>Expiring Soon (30 days)</h3><table><tr><th>Medicine</th><th>Category</th><th>Stock</th><th>Expiry</th><th>Days Left</th></tr>';
+    expiringSoon.forEach(m => {
+      html += '<tr><td>' + m.name + '</td><td>' + catName(m.catId) + '</td><td>' + m.stock + '</td><td>' + fmtDate(m.expiry) + '</td><td>' + daysDiff(m.expiry) + '</td></tr>';
+    });
+    html += '</table>';
+  }
+
+  if (lowStock.length) {
+    html += '<h3>Low Stock Medicines</h3><table><tr><th>Medicine</th><th>Category</th><th>Stock</th><th>Low Stock Level</th><th>Rack</th></tr>';
+    lowStock.forEach(m => {
+      html += '<tr><td>' + m.name + '</td><td>' + catName(m.catId) + '</td><td>' + m.stock + '</td><td>' + m.lowStock + '</td><td>' + (m.rack || '-') + '</td></tr>';
+    });
+    html += '</table>';
+  }
+
+  if (!expired.length && !expiringSoon.length && !lowStock.length) {
+    html += '<div style="margin-top:20px;text-align:center;">No alerts at this time.</div>';
+  }
+
+  html += '</body></html>';
+
+  const printWin = window.open('', '_blank', 'width=800,height=600');
+  if (!printWin) {
+    alert("Please allow pop-ups to print the summary!");
+    return;
+  }
+  printWin.document.open();
+  printWin.document.write(html);
+  printWin.document.close();
+}
+
 // ============================================================
 // INIT
 // ============================================================
@@ -1611,3 +1684,13 @@ document.addEventListener('DOMContentLoaded', () => {
   updateAlertBadge();
   // navigate('dashboard'); // Removed to prevent infinite reload loop in MPA mode
 });
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(err => {
+      console.log(`Error attempting to enable fullscreen: ${err.message} (${err.name})`);
+    });
+  } else {
+    document.exitFullscreen();
+  }
+}
