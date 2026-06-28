@@ -30,6 +30,9 @@ class User extends Authenticatable
         'payout_account_name',
         'payout_account_number',
         'payout_bank_name',
+        'google_id',
+        'google_token',
+        'google_refresh_token',
     ];
 
     /**

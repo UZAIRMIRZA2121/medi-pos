@@ -151,3 +151,8 @@ Route::middleware(['auth', 'role:seller'])->prefix('seller')->name('seller.')->g
 });
 
 require __DIR__.'/auth.php';
+
+// Google Social Login Routes
+use App\Http\Controllers\Auth\GoogleLoginController;
+Route::get('auth/google', [GoogleLoginController::class, 'redirectToGoogle'])->name('google.login');
+Route::get('auth/google/callback', [GoogleLoginController::class, 'handleGoogleCallback']);
