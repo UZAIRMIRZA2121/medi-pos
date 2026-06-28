@@ -23,6 +23,14 @@ Route::get('/package/{slug}', function ($slug) {
     return view('package', compact('package'));
 })->name('package.show');
 
+Route::get('/privacy', function () {
+    return view('privacy');
+})->name('privacy');
+
+Route::get('/terms', function () {
+    return view('terms');
+})->name('terms');
+
 Route::get('/home', function () {
     if (auth()->check()) {
         if (auth()->user()->type === 'admin') {
@@ -49,6 +57,10 @@ Route::middleware(['auth', 'role:store', 'subscription.active'])->group(function
     Route::get('/sales', [App\Http\Controllers\SaleController::class, 'index'])->name('sales.index');
     Route::get('/invoices', [App\Http\Controllers\SaleController::class, 'invoices'])->name('invoices.index');
     Route::get('/alerts', [App\Http\Controllers\AlertController::class, 'index'])->name('alerts.index');
+    Route::get('/purchase-orders', [App\Http\Controllers\PurchaseOrderController::class, 'index'])->name('purchase_orders.index');
+    Route::post('/purchase-orders', [App\Http\Controllers\PurchaseOrderController::class, 'store'])->name('purchase_orders.store');
+    Route::get('/purchase-orders/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'show'])->name('purchase_orders.show');
+    Route::post('/purchase-orders/{id}/receive', [App\Http\Controllers\PurchaseOrderController::class, 'receive'])->name('purchase_orders.receive');
 
 
     Route::get('/settings/print', [App\Http\Controllers\PrintSettingController::class, 'index'])->name('settings.print');

@@ -1554,8 +1554,9 @@ function renderAlerts() {
       <td>${m.stock}</td>
       <td>${fmtDate(m.expiry)}</td>
       <td><span class="badge badge-danger">${Math.abs(daysDiff(m.expiry))} days ago</span></td>
+      <td><button class="btn btn-sm btn-primary" onclick="openSupplierOrderModal('${m.supplierId || ''}')">New Order</button></td>
     </tr>`).join('') :
-    '<tr><td colspan="5" class="empty-cell">No expired medicines</td></tr>';
+    '<tr><td colspan="6" class="empty-cell">No expired medicines</td></tr>';
 
   document.getElementById('expiringSoonTbody').innerHTML = expiringSoon.length ?
     expiringSoon.map(m => `<tr>
@@ -1564,8 +1565,9 @@ function renderAlerts() {
       <td>${m.stock}</td>
       <td>${fmtDate(m.expiry)}</td>
       <td><span class="badge badge-warning">${daysDiff(m.expiry)} days</span></td>
+      <td><button class="btn btn-sm btn-primary" onclick="openSupplierOrderModal('${m.supplierId || ''}')">New Order</button></td>
     </tr>`).join('') :
-    '<tr><td colspan="5" class="empty-cell">No medicines expiring soon</td></tr>';
+    '<tr><td colspan="6" class="empty-cell">No medicines expiring soon</td></tr>';
 
   document.getElementById('lowStockTbody').innerHTML = lowStock.length ?
     lowStock.map(m => `<tr>
@@ -1574,8 +1576,238 @@ function renderAlerts() {
       <td><span class="badge badge-warning">${m.stock} / ${m.lowStock}</span></td>
       <td>${m.rack || '-'}</td>
       <td>${(getSupplier(m.supplierId) || {}).name || '-'}</td>
+      <td><button class="btn btn-sm btn-primary" onclick="openSupplierOrderModal('${m.supplierId || ''}')">New Order</button></td>
     </tr>`).join('') :
-    '<tr><td colspan="5" class="empty-cell">No low stock medicines</td></tr>';
+    '<tr><td colspan="6" class="empty-cell">No low stock medicines</td></tr>';
+}
+
+// Supplier Order Modal Logic
+function openSupplierOrderModal(supplierId) {
+  if (!supplierId) {
+    toast('No supplier associated with this medicine', 'warning');
+    return;
+  }
+  
+  const supplier = getSupplier(supplierId);
+  if (!supplier) {
+    toast('Supplier not found', 'danger');
+    return;
+  }
+
+  const meds = store.get('medicines').filter(m => m.supplierId == supplierId);
+  const orderMeds = meds.filter(m => isLowStock(m) || isExpired(m.expiry) || (daysDiff(m.expiry) >= 0 && daysDiff(m.expiry) <= 30));
+  
+  document.getElementById('orderSupplierName').textContent = supplier.name;
+  document.getElementById('orderSupplierId').value = supplierId;
+
+  const tbody = document.getElementById('supplierOrderTbody');
+  
+  if (orderMeds.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="empty-cell">No medicines need ordering</td></tr>';
+  } else {
+    tbody.innerHTML = orderMeds.map((m, idx) => `
+      <tr>
+        <td style="font-weight:500">
+          ${m.name}
+          <div style="font-size: 0.8em; color: var(--muted)">Current Stock: ${m.stock}</div>
+        </td>
+        <td>
+          <input type="hidden" name="med_id[]" value="${m.id}">
+          <input type="hidden" name="med_name[]" value="${m.name}">
+          <input type="number" class="input order-qty" name="med_qty[]" min="1" value="${Math.max(1, (m.lowStock * 2) - m.stock)}" style="width: 80px; padding: 6px 12px; text-align: center;">
+        </td>
+        <td style="text-align: right;">
+          <button type="button" class="action-btn del" onclick="this.closest('tr').remove()" title="Remove">${DEL_SVG}</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+  
+  document.getElementById('supplierOrderModal').classList.remove('hidden');
+}
+
+async function printSupplierOrder() {
+  const supplierId = document.getElementById('orderSupplierId').value;
+  const supplier = getSupplier(supplierId) || { name: 'Unknown' };
+  const orderNotes = document.getElementById('orderNotes').value;
+  const rows = document.querySelectorAll('#supplierOrderTbody tr');
+  
+  const items = [];
+  rows.forEach(tr => {
+    const qtyInput = tr.querySelector('.order-qty');
+    const nameInput = tr.querySelector('input[name="med_name[]"]');
+    if (qtyInput && nameInput && parseInt(qtyInput.value) > 0) {
+      const name = tr.querySelector('input[name="med_name[]"]').value;
+      const id = tr.querySelector('input[name="med_id[]"]').value;
+      const qty = tr.querySelector('input[name="med_qty[]"]').value;
+      items.push({ id, name, qty });
+    }
+  });
+
+  try {
+      const response = await fetch('/purchase-orders', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify({ supplier_id: supplierId, items: items, notes: orderNotes })
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+          toast(data.message, 'success');
+          
+          let html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <title>Purchase Order Invoice</title>
+              <style>
+                * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Courier New', Courier, monospace; }
+                @page { size: auto; margin: 0; }
+                body { 
+                    background: #fff; 
+                    color: #000; 
+                    font-size: 14px; 
+                    max-width: 80mm; 
+                    margin: 0 auto; 
+                    padding: 5mm;
+                    text-transform: uppercase;
+                }
+                .text-center { text-align: center; }
+                .text-right { text-align: right; }
+                .text-left { text-align: left; }
+                .font-bold { font-weight: bold; }
+                
+                h2 { font-size: 22px; font-weight: bold; margin-bottom: 3px; }
+                .address { font-size: 13px; margin-bottom: 5px; line-height: 1.2; }
+                
+                .divider { border-bottom: 1px dashed #000; margin: 8px 0; }
+                .divider-solid { border-bottom: 1px solid #000; margin: 8px 0; }
+                
+                .receipt-title { font-size: 18px; font-weight: bold; margin: 10px 0; letter-spacing: 1px; }
+                
+                .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 13px; }
+                
+                table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+                th, td { padding: 4px 2px; font-size: 13px; vertical-align: top; }
+                th { border-top: 1px dashed #000; border-bottom: 1px dashed #000; font-weight: bold; }
+                
+                .totals { margin-top: 10px; }
+                .totals-row { display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 14px; font-weight: bold; }
+                
+                .signatures { margin-top: 30px; font-size: 13px; }
+                .sig-line { margin-top: 25px; border-top: 1px solid #000; width: 100%; padding-top: 3px; }
+                .sig-container { display: flex; justify-content: space-between; gap: 15px; }
+                .sig-box { flex: 1; text-align: center; }
+                
+                .footer-note { margin-top: 15px; font-size: 11px; text-align: center; font-style: italic; }
+                
+                @media print {
+                    body { max-width: 100%; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="text-center">
+                <h2>${window.printSettings.name}</h2>
+                <div class="address">${window.printSettings.address.replace(/\n/g, '<br>')}</div>
+                
+                <div class="divider-solid"></div>
+                <div class="receipt-title">PURCHASE ORDER</div>
+                <div class="divider-solid"></div>
+              </div>
+              
+              <div class="info-row">
+                <span><strong>ORDER #:</strong></span>
+                <span>${data.order_number}</span>
+              </div>
+              <div class="info-row">
+                <span><strong>DATE:</strong></span>
+                <span>${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-US', {hour12:true, hour:'2-digit', minute:'2-digit'})}</span>
+              </div>
+              <div class="info-row">
+                <span><strong>SUPPLIER:</strong></span>
+                <span>${supplier.name}</span>
+              </div>
+              <div class="info-row">
+                <span><strong>PHONE:</strong></span>
+                <span>${supplier.phone || 'N/A'}</span>
+              </div>
+              
+              <table>
+                <thead>
+                  <tr>
+                    <th class="text-left" style="width: 10%;">#</th>
+                    <th class="text-left" style="width: 70%;">ITEM DESCRIPTION</th>
+                    <th class="text-right" style="width: 20%;">QTY</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${items.map((i, index) => `
+                    <tr>
+                      <td class="text-left">${index + 1}</td>
+                      <td class="text-left">${i.name}</td>
+                      <td class="text-right font-bold">${i.qty}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+              
+              <div class="divider"></div>
+              
+              <div class="totals">
+                <div class="totals-row">
+                  <span>TOTAL ITEMS:</span>
+                  <span>${items.length}</span>
+                </div>
+                <div class="totals-row">
+                  <span>TOTAL UNITS:</span>
+                  <span>${items.reduce((sum, i) => sum + parseInt(i.qty), 0)}</span>
+                </div>
+              </div>
+              
+              <div class="signatures">
+                <div class="sig-container">
+                  <div class="sig-box">
+                    <div class="sig-line">Prepared By</div>
+                  </div>
+                  <div class="sig-box">
+                    <div class="sig-line">Authorized By</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="footer-note">
+                ${orderNotes ? `<div style="margin-bottom:10px;text-align:left;"><strong>NOTES:</strong><br>${orderNotes}</div>` : ''}
+                This is a system generated purchase order.
+              </div>
+              
+              <script>
+                window.onload = function() { 
+                    setTimeout(() => {
+                        window.print(); 
+                        window.close(); 
+                    }, 500);
+                }
+              </script>
+            </body>
+            </html>
+          `;
+          
+          const win = window.open('', '_blank');
+          win.document.write(html);
+          win.document.close();
+          document.getElementById('supplierOrderModal').classList.add('hidden');
+      } else {
+          toast(data.message || 'Error saving order', 'error');
+      }
+  } catch (err) {
+      console.error(err);
+      toast('Failed to save purchase order', 'error');
+  }
 }
 
 function printAlerts() {
@@ -1693,4 +1925,96 @@ function toggleFullscreen() {
   } else {
     document.exitFullscreen();
   }
+}
+
+async function openOrderDetails(id) {
+    try {
+        const response = await fetch(`/purchase-orders/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch order details');
+        
+        const order = await response.json();
+        
+        const tbody = document.getElementById('detailOrderItemsTbody');
+        tbody.innerHTML = '';
+        
+        if (order.items && order.items.length > 0) {
+            order.items.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div class="font-medium">${item.medicine ? item.medicine.name : 'Unknown Medicine'}</div>
+                     
+                    </td>
+                    <td>${item.quantity}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="2" class="text-center text-gray-500">No items found</td></tr>';
+        }
+        
+        document.getElementById('purchaseOrderDetailsModal').classList.remove('hidden');
+    } catch (error) {
+        console.error(error);
+        toast('Error loading order details', 'error');
+    }
+}
+
+async function markOrderReceived(id) {
+    if (typeof Swal !== 'undefined') {
+        const result = await Swal.fire({
+            title: 'Receive Order?',
+            text: 'Are you sure you have received this order? This will automatically add the quantities to your inventory stock!',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, receive it!'
+        });
+        
+        if (!result.isConfirmed) {
+            return;
+        }
+    } else {
+        if (!confirm('Are you sure you have received this order? This will automatically add the quantities to your inventory stock!')) {
+            return;
+        }
+    }
+    
+    try {
+        const response = await fetch(`/purchase-orders/${id}/receive`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok && data.success) {
+            if (typeof Swal !== 'undefined') {
+                await Swal.fire('Received!', data.message, 'success');
+                window.location.reload();
+            } else {
+                toast(data.message, 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            }
+        } else {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire('Error', data.message || 'Error processing order', 'error');
+            } else {
+                toast(data.message || 'Error processing order', 'error');
+            }
+        }
+    } catch (error) {
+        console.error(error);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('Error', 'Failed to process order', 'error');
+        } else {
+            toast('Failed to process order', 'error');
+        }
+    }
 }

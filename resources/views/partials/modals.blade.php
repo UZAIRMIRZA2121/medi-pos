@@ -114,3 +114,69 @@
     </div>
   </div>
 </div>
+
+<!-- Supplier Order Modal -->
+<div class="modal-overlay hidden" id="supplierOrderModal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3>Purchase Order: <span id="orderSupplierName"></span></h3>
+      <button class="modal-close" onclick="document.getElementById('supplierOrderModal').classList.add('hidden');">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="orderSupplierId"/>
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Order Qty</th>
+              <th width="50"></th>
+            </tr>
+          </thead>
+          <tbody id="supplierOrderTbody">
+            <!-- Populated via JS -->
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-4">
+        <label class="label">Order Notes</label>
+        <textarea id="orderNotes" class="input w-full" rows="2" placeholder="Optional notes for this purchase order..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('supplierOrderModal').classList.add('hidden');">Cancel</button>
+      <button class="btn btn-primary" onclick="printSupplierOrder()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2" style="margin-right:8px;vertical-align:text-bottom;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+        Print Invoice
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Purchase Order Details Modal -->
+<div id="purchaseOrderDetailsModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width: 600px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Purchase Order Details</h3>
+      <button class="close-btn" onclick="document.getElementById('purchaseOrderDetailsModal').classList.add('hidden');">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="table-responsive">
+        <table class="table w-full">
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Quantity</th>
+            </tr>
+          </thead>
+          <tbody id="detailOrderItemsTbody">
+            <!-- Items populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('purchaseOrderDetailsModal').classList.add('hidden');">Close</button>
+    </div>
+  </div>
+</div>

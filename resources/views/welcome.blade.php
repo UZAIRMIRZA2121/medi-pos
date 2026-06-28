@@ -1700,8 +1700,8 @@
 
       <div class="col-6 col-lg-2">
         <div class="footer-heading">Legal</div>
-        <a href="#" class="footer-link">Privacy Policy</a>
-        <a href="#" class="footer-link">Terms of Service</a>
+        <a href="{{ route('privacy') }}" class="footer-link">Privacy Policy</a>
+        <a href="{{ route('terms') }}" class="footer-link">Terms of Service</a>
         <a href="#" class="footer-link">Refund Policy</a>
         <a href="#" class="footer-link">Security</a>
       </div>
@@ -1709,7 +1709,7 @@
       <!-- Contact -->
       <div class="col-6 col-lg-2">
         <div class="footer-heading">Contact</div>
-      <a href="mailto:[EMAIL_ADDRESS]" class="footer-link"><i class="bi bi-envelope me-2"></i>[EMAIL_ADDRESS]</a>
+      <a href="mailto:mutechstudio1@gmail.com" class="footer-link"><i class="bi bi-envelope me-2"></i>mutechstudio1@gmail.com</a>
         <a href="tel:+923086452242" class="footer-link"><i class="bi bi-telephone me-2"></i>+92 308 645 2242</a>
        <a href="https://wa.me/923086452242?text=Hello%20MediPOS%20Team,%20I%20would%20like%20to%20book%20a%20demo%20for%20your%20Medical%20POS%20Software." 
    target="_blank" 
@@ -1724,8 +1724,8 @@
     <div class="footer-bottom">
       <p class="footer-copy">© 2026 <span>MediPOS</span>. All rights reserved. Made with <i class="bi bi-heart-fill" style="color:#f87171;"></i> in Pakistan.</p>
       <div class="d-flex gap-3">
-        <a href="#" class="footer-link mb-0" style="font-size:0.8rem;">Privacy</a>
-        <a href="#" class="footer-link mb-0" style="font-size:0.8rem;">Terms</a>
+        <a href="{{ route('privacy') }}" class="footer-link mb-0" style="font-size:0.8rem;">Privacy</a>
+        <a href="{{ route('terms') }}" class="footer-link mb-0" style="font-size:0.8rem;">Terms</a>
         <a href="#" class="footer-link mb-0" style="font-size:0.8rem;">Sitemap</a>
       </div>
     </div>

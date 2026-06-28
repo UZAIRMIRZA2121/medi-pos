@@ -1170,559 +1170,77 @@
 </nav>
 
 <!-- =============================================
-     SINGLE PACKAGE DETAILS
-============================================= -->
-<section id="hero" style="padding-top: 150px; min-height: 80vh;">
-  <div class="bg-orb orb-1"></div>
-  <div class="container position-relative" style="z-index:2;">
-    <div class="row align-items-center justify-content-center">
-      <div class="col-lg-8 text-center reveal">
-        <div class="hero-badge"><i class="bi bi-box-seam"></i> {{ ucfirst(str_replace("_", " ", $package->billing_type)) }} Plan</div>
-        <h1 class="hero-title">{{ $package->name }}</h1>
-        <p class="hero-subtitle mx-auto" style="font-size: 1.2rem;">{{ $package->short_description ?? "The best solution for your pharmacy." }}</p>
-
-        <div class="glass-card pricing-card text-start mx-auto mt-5" style="max-width: 500px; padding: 2.5rem;">
-          <div class="pricing-price justify-content-center mb-4">
-            @if($package->price > 0)
-                <span class="price-currency">₨</span>
-                <span class="price-amount">{{ number_format($package->price) }}</span>
-                <span class="price-period">/{{ $package->billing_type == "monthly" ? "month" : ($package->billing_type == "yearly" ? "year" : "lifetime") }}</span>
-            @else
-                <span class="price-amount" style="font-size:2.2rem;">Custom Pricing</span>
-            @endif
-          </div>
-          
-          <div class="pricing-divider"></div>
-          
-          <h4 class="text-white mb-3" style="font-family: var(--font-display); font-size: 1.1rem;">Package Features</h4>
-          
-          @if($package->is_cloud)
-          <div class="pricing-feature"><i class="bi bi-check-circle-fill"></i>Cloud Sync & Backup</div>
-          @endif
-          @if($package->is_offline)
-          <div class="pricing-feature"><i class="bi bi-check-circle-fill"></i>Offline Desktop App Included</div>
-          @endif
-          @if($package->lifetime_license)
-          <div class="pricing-feature"><i class="bi bi-check-circle-fill"></i>Lifetime Access (No Recurring Fees)</div>
-          @endif
-          @if($package->hosting_included)
-          <div class="pricing-feature"><i class="bi bi-check-circle-fill"></i>Hosting & Domain Included</div>
-          @endif
-          @if($package->support_included)
-          <div class="pricing-feature"><i class="bi bi-check-circle-fill"></i>Priority Customer Support</div>
-          @endif
-          @if($package->free_updates)
-          <div class="pricing-feature"><i class="bi bi-check-circle-fill"></i>Free System Updates</div>
-          @endif
-          
-          @if($package->description)
-              <div class="mt-4 mb-2 text-muted" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Additional Details</div>
-              @foreach(explode("\n", $package->description) as $line)
-                  @if(trim($line))
-                  <div class="pricing-feature"><i class="bi bi-check-circle-fill"></i>{{ trim($line) }}</div>
-                  @endif
-              @endforeach
-          @endif
-
-          <div class="mt-5 text-center">
-            <a href="https://wa.me/923086452242?text={{ urlencode('im intrested ' . $package->name . '.can you guide me for this please.') }}" target="_blank" class="btn-primary-custom d-block w-100" style="text-decoration: none;">
-              {{ $package->price > 0 ? "Subscribe to " . $package->name : "Contact Sales" }}
-            </a>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- =============================================
      HERO SECTION
 ============================================= -->
-<section id="hero">
-  <div class="bg-orb orb-1"></div>
-  <div class="bg-orb orb-2"></div>
-  <div class="bg-orb orb-3"></div>
+<section style="padding: 120px 0 80px; min-height: 80vh; background: var(--navy);">
+  <div class="container">
+    <div style="max-width: 800px; margin: 0 auto; background: var(--navy-card); padding: 40px; border-radius: var(--radius-md); border: 1px solid var(--glass-border);">
+      <h1 class="mb-4" style="color: white; font-family: var(--font-display);">Privacy Policy</h1>
+      <p style="color: var(--muted); line-height: 1.7; margin-bottom: 20px;">
+        <strong>Effective Date:</strong> {{ date('F j, Y') }}<br><br>
+        At <strong>MediPOS</strong>, we are committed to protecting your privacy and ensuring that your personal and business data is secure. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website (medipos.pk) and use our Point of Sale (POS) software designed for medical stores and pharmacies in Pakistan.
+      </p>
 
-  <div class="container position-relative" style="z-index:2;">
-    <div class="row align-items-center g-5">
+      <h3 style="color: white; margin-top: 30px; margin-bottom: 15px; font-size: 1.25rem;">1. Information We Collect</h3>
+      <p style="color: var(--muted); line-height: 1.7; margin-bottom: 20px;">
+        We may collect information about you and your business in a variety of ways when you interact with our platform. The information we may collect includes:
+      </p>
+      <ul style="color: var(--muted); line-height: 1.7; margin-bottom: 20px;">
+        <li><strong>Personal Data:</strong> Personally identifiable information such as your name, shipping address, email address, and telephone number that you voluntarily give to us when you register for the service.</li>
+        <li><strong>Business Data:</strong> Information relating to your pharmacy, including store name, address, inventory, supplier details, sales records, and patient/customer data entered into the POS system.</li>
+        <li><strong>Financial Data:</strong> Data related to your payment method (e.g., valid credit card number, card brand, expiration date) that we may collect when you purchase our premium packages.</li>
+        <li><strong>Derivative Data:</strong> Information our servers automatically collect when you access the site, such as your IP address, browser type, operating system, access times, and the pages you have viewed directly before and after accessing the site.</li>
+      </ul>
 
-      <!-- Left: Copy -->
-      <div class="col-lg-6 reveal-left">
-        <div class="hero-badge">
-          <i class="bi bi-stars"></i>
-          Pakistan's #1 Medical POS Platform
-        </div>
-        <h1 class="hero-title">
-          The Complete <span class="gradient-text">Medical Store</span> POS Solution
-        </h1>
-        <p class="hero-subtitle">
-          Manage inventory, sales, purchases, customers, suppliers, reports, and billing with one powerful POS system built for modern pharmacies.
-        </p>
-        <div class="hero-btns">
-          <a href="#packages" class="btn-primary-custom">
-            <i class="bi bi-rocket-takeoff me-2"></i>Get Started Free
-          </a>
-          <a href="#packages" class="btn-outline-custom">
-            <i class="bi bi-tag me-2"></i>View Pricing
-          </a>
-        </div>
-        <div class="hero-stats">
-          <div class="hero-stat">
-            <div class="hero-stat-icon"><i class="bi bi-shop"></i></div>
-            <div class="hero-stat-text">
-              <strong>500+</strong>
-              <small>Medical Stores</small>
-            </div>
-          </div>
-          <div class="hero-stat">
-            <div class="hero-stat-icon"><i class="bi bi-lightning-charge"></i></div>
-            <div class="hero-stat-text">
-              <strong>50K+</strong>
-              <small>Daily Transactions</small>
-            </div>
-          </div>
-          <div class="hero-stat">
-            <div class="hero-stat-icon"><i class="bi bi-shield-check"></i></div>
-            <div class="hero-stat-text">
-              <strong>99.9%</strong>
-              <small>Uptime SLA</small>
-            </div>
-          </div>
-        </div>
-      </div>
+      <h3 style="color: white; margin-top: 30px; margin-bottom: 15px; font-size: 1.25rem;">2. Use of Your Information</h3>
+      <p style="color: var(--muted); line-height: 1.7; margin-bottom: 20px;">
+        Having accurate information permits us to provide you with a smooth, efficient, and customized experience. Specifically, we may use information collected about you to:
+      </p>
+      <ul style="color: var(--muted); line-height: 1.7; margin-bottom: 20px;">
+        <li>Create, manage, and secure your account.</li>
+        <li>Process transactions and generate receipts, invoices, and ledgers.</li>
+        <li>Email you regarding your account, subscription renewals, or critical system updates.</li>
+        <li>Improve the efficiency and operation of the POS system.</li>
+        <li>Monitor and analyze usage and trends to improve your experience.</li>
+        <li>Respond to customer service requests, troubleshoot issues, and provide technical support.</li>
+      </ul>
 
-      <!-- Right: Dashboard Mockup -->
-      <div class="col-lg-6 reveal-right">
-        <div class="dashboard-wrapper position-relative">
+      <h3 style="color: white; margin-top: 30px; margin-bottom: 15px; font-size: 1.25rem;">3. Data Security & Storage</h3>
+      <p style="color: var(--muted); line-height: 1.7; margin-bottom: 20px;">
+        We use administrative, technical, and physical security measures to help protect your personal and business information. Your pharmacy inventory, sales data, and customer ledgers are stored securely on our cloud servers using industry-standard encryption protocols.
+        <br><br>
+        While we have taken reasonable steps to secure the personal information you provide to us, please be aware that despite our efforts, no security measures are perfect or impenetrable, and no method of data transmission can be guaranteed against any interception or other type of misuse.
+      </p>
 
-          <!-- Floating notification cards -->
-          <div class="db-floating-card fc-1">
-            <div class="fc-icon" style="background:rgba(74,222,128,0.15);">
-              <i class="bi bi-arrow-up-right" style="color:#4ade80;"></i>
-            </div>
-            <div>
-              <div style="font-weight:700;color:white;font-size:0.78rem;">Revenue Up 24%</div>
-              <div style="color:var(--muted);font-size:0.7rem;">vs last month</div>
-            </div>
-          </div>
+      <h3 style="color: white; margin-top: 30px; margin-bottom: 15px; font-size: 1.25rem;">4. Disclosure of Your Information</h3>
+      <p style="color: var(--muted); line-height: 1.7; margin-bottom: 20px;">
+        We value your privacy and <strong>will never sell, trade, or rent your business data</strong> (such as inventory or sales records) to third parties. We may share information we have collected about you in certain situations, such as:
+      </p>
+      <ul style="color: var(--muted); line-height: 1.7; margin-bottom: 20px;">
+        <li><strong>By Law or to Protect Rights:</strong> If we believe the release of information about you is necessary to respond to legal process, investigate or remedy potential violations of our policies, or protect the rights, property, and safety of others.</li>
+        <li><strong>Third-Party Service Providers:</strong> We may share your information with third parties that perform services for us, such as payment processing, email delivery, and hosting services.</li>
+      </ul>
 
-          <div class="db-floating-card fc-2">
-            <div class="fc-icon" style="background:rgba(79,70,229,0.2);">
-              <i class="bi bi-box-seam" style="color:var(--indigo-light);"></i>
-            </div>
-            <div>
-              <div style="font-weight:700;color:white;font-size:0.78rem;">12 Items Low Stock</div>
-              <div style="color:#fbbf24;font-size:0.7rem;">Action required</div>
-            </div>
-          </div>
+      <h3 style="color: white; margin-top: 30px; margin-bottom: 15px; font-size: 1.25rem;">5. Data Retention & Deletion</h3>
+      <p style="color: var(--muted); line-height: 1.7; margin-bottom: 20px;">
+        We retain your account and business data for as long as your account is active. If you choose to terminate your subscription, you may request the deletion of your data by contacting our support team. We will comply with all deletion requests within 30 days, subject to any legal obligations to retain certain records.
+      </p>
 
-          <div class="dashboard-scene" id="dashScene">
-            <div class="dashboard-mockup">
+      <h3 style="color: white; margin-top: 30px; margin-bottom: 15px; font-size: 1.25rem;">6. Changes to This Privacy Policy</h3>
+      <p style="color: var(--muted); line-height: 1.7; margin-bottom: 20px;">
+        We may update this Privacy Policy from time to time in order to reflect changes to our practices or for other operational, legal, or regulatory reasons. We will alert you about any changes by updating the "Effective Date" of this Privacy Policy.
+      </p>
 
-              <!-- Topbar -->
-              <div class="db-topbar">
-                <div class="db-dots">
-                  <div class="db-dot red"></div>
-                  <div class="db-dot yellow"></div>
-                  <div class="db-dot green"></div>
-                </div>
-                <div class="db-title">MediPOS Dashboard — Al-Shifa Pharmacy</div>
-              </div>
-
-              <!-- Dashboard Grid -->
-              <div class="db-body">
-
-                <!-- Revenue card -->
-                <div class="db-card">
-                  <div class="db-card-label">Today's Revenue</div>
-                  <div class="db-card-value">₨ 84,320</div>
-                  <div class="db-card-sub"><i class="bi bi-arrow-up-short"></i> +18.4% from yesterday</div>
-                  <div class="db-mini-chart">
-                    <div class="db-bar" style="height:45%;animation-delay:0.1s;"></div>
-                    <div class="db-bar" style="height:60%;animation-delay:0.15s;"></div>
-                    <div class="db-bar" style="height:40%;animation-delay:0.2s;"></div>
-                    <div class="db-bar" style="height:80%;animation-delay:0.25s;"></div>
-                    <div class="db-bar" style="height:55%;animation-delay:0.3s;"></div>
-                    <div class="db-bar" style="height:90%;animation-delay:0.35s;"></div>
-                    <div class="db-bar" style="height:70%;animation-delay:0.4s;"></div>
-                  </div>
-                </div>
-
-                <!-- Inventory card -->
-                <div class="db-card">
-                  <div class="db-card-label">Stock Health</div>
-                  <div class="db-donut"></div>
-                  <div style="font-size:0.68rem;color:var(--muted);text-align:center;margin-top:6px;">1,284 SKUs tracked</div>
-                </div>
-
-                <!-- Recent Sales -->
-                <div class="db-card full">
-                  <div class="db-card-label" style="margin-bottom:10px;">Recent Transactions</div>
-                  <div class="db-table-row">
-                    <span style="color:rgba(255,255,255,0.85);">Panadol 500mg × 3</span>
-                    <span style="color:white;font-weight:600;">₨ 135</span>
-                    <span class="db-pill green">Paid</span>
-                  </div>
-                  <div class="db-table-row">
-                    <span style="color:rgba(255,255,255,0.85);">Augmentin 625mg × 1</span>
-                    <span style="color:white;font-weight:600;">₨ 480</span>
-                    <span class="db-pill green">Paid</span>
-                  </div>
-                  <div class="db-table-row">
-                    <span style="color:rgba(255,255,255,0.85);">Insulin Glargine × 2</span>
-                    <span style="color:white;font-weight:600;">₨ 2,400</span>
-                    <span class="db-pill blue">Credit</span>
-                  </div>
-                  <div class="db-table-row">
-                    <span style="color:rgba(255,255,255,0.85);">Ventolin Inhaler × 1</span>
-                    <span style="color:white;font-weight:600;">₨ 340</span>
-                    <span class="db-pill amber">Pending</span>
-                  </div>
-                </div>
-
-                <!-- Purchase order card -->
-                <div class="db-card">
-                  <div class="db-card-label">Monthly Target</div>
-                  <div class="db-card-value" style="font-size:1.1rem;">₨ 2.4M / 3M</div>
-                  <div class="db-progress" style="margin-top:10px;">
-                    <div class="db-progress-fill" style="width:80%;"></div>
-                  </div>
-                  <div style="font-size:0.68rem;color:#4ade80;margin-top:6px;">80% achieved</div>
-                </div>
-
-                <!-- Alerts card -->
-                <div class="db-card">
-                  <div class="db-card-label">Expiry Alerts</div>
-                  <div class="db-card-value" style="font-size:1.4rem;color:#fbbf24;">7</div>
-                  <div style="font-size:0.7rem;color:var(--muted);margin-top:4px;">Items expiring in 30 days</div>
-                  <div class="db-progress" style="margin-top:10px;">
-                    <div class="db-progress-fill" style="width:35%;background:linear-gradient(90deg,#fbbf24,#f87171);"></div>
-                  </div>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</section>
-
-<!-- =============================================
-     FEATURES SECTION
-============================================= -->
-<section id="features">
-  <div class="bg-orb orb-1" style="opacity:0.5;"></div>
-  <div class="container position-relative" style="z-index:2;">
-    <div class="text-center mb-5 reveal">
-      <div class="section-label"><span class="dot"></span>Powerful Features</div>
-      <h2 class="section-title">Everything Your Medical Store <span class="gradient-text">Needs</span></h2>
-      <p class="section-subtitle mx-auto">A complete suite of tools designed specifically for pharmacies and medical retailers.</p>
-    </div>
-
-    <div class="row g-4">
-      <!-- Feature 1 -->
-      <div class="col-md-6 col-lg-3 reveal" style="transition-delay:0.05s;">
-        <div class="glass-card feature-card">
-          <div class="feature-icon-wrap fi-1"><i class="bi bi-boxes"></i></div>
-          <div class="feature-card-title">Inventory Management</div>
-          <p class="feature-card-desc">Real-time stock tracking, auto-reorder alerts, batch & expiry management for thousands of SKUs.</p>
-        </div>
-      </div>
-      <!-- Feature 2 -->
-      <div class="col-md-6 col-lg-3 reveal" style="transition-delay:0.1s;">
-        <div class="glass-card feature-card">
-          <div class="feature-icon-wrap fi-2"><i class="bi bi-receipt-cutoff"></i></div>
-          <div class="feature-card-title">Sales Management</div>
-          <p class="feature-card-desc">Fast checkout, discount handling, refunds, and end-of-day cash reconciliation in seconds.</p>
-        </div>
-      </div>
-      <!-- Feature 3 -->
-      <div class="col-md-6 col-lg-3 reveal" style="transition-delay:0.15s;">
-        <div class="glass-card feature-card">
-          <div class="feature-icon-wrap fi-3"><i class="bi bi-cart-check"></i></div>
-          <div class="feature-card-title">Purchase Management</div>
-          <p class="feature-card-desc">Create purchase orders, receive stock, and track supplier invoices with full audit trails.</p>
-        </div>
-      </div>
-      <!-- Feature 4 -->
-      <div class="col-md-6 col-lg-3 reveal" style="transition-delay:0.2s;">
-        <div class="glass-card feature-card">
-          <div class="feature-icon-wrap fi-4"><i class="bi bi-people"></i></div>
-          <div class="feature-card-title">Customer Management</div>
-          <p class="feature-card-desc">Build customer profiles, track credit balances, purchase history, and loyalty records.</p>
-        </div>
-      </div>
-      <!-- Feature 5 -->
-      <div class="col-md-6 col-lg-3 reveal" style="transition-delay:0.05s;">
-        <div class="glass-card feature-card">
-          <div class="feature-icon-wrap fi-5"><i class="bi bi-truck"></i></div>
-          <div class="feature-card-title">Supplier Management</div>
-          <p class="feature-card-desc">Manage supplier contacts, payment terms, and purchase histories in one central hub.</p>
-        </div>
-      </div>
-      <!-- Feature 6 -->
-      <div class="col-md-6 col-lg-3 reveal" style="transition-delay:0.1s;">
-        <div class="glass-card feature-card">
-          <div class="feature-icon-wrap fi-6"><i class="bi bi-upc-scan"></i></div>
-          <div class="feature-card-title">Barcode Support</div>
-          <p class="feature-card-desc">Scan any barcode for instant lookup. Print custom labels for unlabelled medicines.</p>
-        </div>
-      </div>
-      <!-- Feature 7 -->
-      <div class="col-md-6 col-lg-3 reveal" style="transition-delay:0.15s;">
-        <div class="glass-card feature-card">
-          <div class="feature-icon-wrap fi-7"><i class="bi bi-graph-up-arrow"></i></div>
-          <div class="feature-card-title">Reports & Analytics</div>
-          <p class="feature-card-desc">Profit & loss, sales trends, stock valuation, and custom date-range reports exported to PDF/Excel.</p>
-        </div>
-      </div>
-      <!-- Feature 8 -->
-      <div class="col-md-6 col-lg-3 reveal" style="transition-delay:0.2s;">
-        <div class="glass-card feature-card">
-          <div class="feature-icon-wrap fi-8"><i class="bi bi-person-badge"></i></div>
-          <div class="feature-card-title">Multi-User Access</div>
-          <p class="feature-card-desc">Role-based permissions — give cashiers, managers, and owners different levels of system access.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- =============================================
-     PACKAGES / PRICING SECTION
-============================================= -->
-<section id="packages">
-  <div class="container position-relative" style="z-index:2;">
-    <div class="text-center mb-5 reveal">
-      <div class="section-label"><span class="dot"></span>Simple Pricing</div>
-      <h2 class="section-title">Choose the Perfect <span class="gradient-text">Package</span></h2>
-      <p class="section-subtitle mx-auto">Transparent pricing with no hidden fees. Scale as your medical store grows.</p>
-    </div>
-
-    <!--
-      NOTE FOR LARAVEL BLADE:
-      Replace the cards below with a @@foreach($packages as $pkg) loop.
-      Each card uses the same Bootstrap .glass-card .pricing-card structure.
-      Add class="popular" to the recommended tier card.
-    -->
-    <div class="row g-4 justify-content-center">
-
-      @foreach($packages as $index => $package)
-      <div class="col-lg-4 col-md-6 reveal" style="transition-delay:{{ 0.05 * (($index % 3) + 1) }}s;">
-        <div class="glass-card pricing-card {{ $index === 1 ? 'popular' : '' }}">
-          @if($index === 1)
-          <div class="popular-badge"><i class="bi bi-star-fill me-1"></i>Most Popular</div>
-          @endif
-          <div class="pricing-tier">{{ ucfirst(str_replace('_', ' ', $package->billing_type)) }}</div>
-          <div class="pricing-name">{{ $package->name }}</div>
-          <div class="pricing-price">
-            @if($package->price > 0)
-                <span class="price-currency">₨</span>
-                <span class="price-amount">{{ number_format($package->price) }}</span>
-                <span class="price-period">/{{ $package->billing_type == 'monthly' ? 'month' : ($package->billing_type == 'yearly' ? 'year' : 'lifetime') }}</span>
-            @else
-                <span class="price-amount" style="font-size:2.2rem;">Custom</span>
-            @endif
-          </div>
-          <p class="pricing-desc">{{ $package->short_description ?? 'The best solution for your pharmacy.' }}</p>
-          <div class="pricing-divider"></div>
-          
-          @if($package->is_cloud)
-          <div class="pricing-feature"><i class="bi bi-check-circle-fill"></i>Cloud Sync</div>
-          @endif
-          @if($package->is_offline)
-          <div class="pricing-feature"><i class="bi bi-check-circle-fill"></i>Offline Ready</div>
-          @endif
-          @if($package->lifetime_license)
-          <div class="pricing-feature"><i class="bi bi-check-circle-fill"></i>Lifetime License</div>
-          @endif
-          @if($package->hosting_included)
-          <div class="pricing-feature"><i class="bi bi-check-circle-fill"></i>Hosting Included</div>
-          @endif
-          @if($package->support_included)
-          <div class="pricing-feature"><i class="bi bi-check-circle-fill"></i>Support Included</div>
-          @endif
-          @if($package->free_updates)
-          <div class="pricing-feature"><i class="bi bi-check-circle-fill"></i>Free Updates</div>
-          @endif
-          
-          @if($package->description)
-              @foreach(explode("\n", $package->description) as $line)
-                  @if(trim($line))
-                  <div class="pricing-feature"><i class="bi bi-check-circle-fill"></i>{{ trim($line) }}</div>
-                  @endif
-              @endforeach
-          @endif
-
-          <a href="#" class="pricing-cta {{ $index === 1 ? 'cta-solid' : 'cta-outline' }}">
-            {{ $package->price > 0 ? 'Get Started' : 'Contact Sales' }}
-          </a>
-        </div>
-      </div>
-      @endforeach
-
-    </div>
-  </div>
-</section>
-
-<!-- =============================================
-     WHY CHOOSE MediPOS
-============================================= -->
-<section id="why">
-  <div class="bg-orb orb-2" style="opacity:0.4;"></div>
-  <div class="container position-relative" style="z-index:2;">
-    <div class="text-center mb-5 reveal">
-      <div class="section-label"><span class="dot"></span>Why MediPOS</div>
-      <h2 class="section-title">Trusted by Medical Stores <span class="gradient-text">Across Pakistan</span></h2>
-    </div>
-
-    <div class="row g-4 mb-5">
-      <div class="col-md-6 col-lg-3 reveal" style="transition-delay:0.05s;">
-        <div class="glass-card stat-card">
-          <div class="stat-icon fi-2"><i class="bi bi-shop"></i></div>
-          <div class="stat-number gradient-text" data-target="500">0</div>
-          <div class="stat-label">Medical Stores Onboarded</div>
-        </div>
-      </div>
-      <div class="col-md-6 col-lg-3 reveal" style="transition-delay:0.1s;">
-        <div class="glass-card stat-card">
-          <div class="stat-icon fi-3"><i class="bi bi-lightning-charge-fill"></i></div>
-          <div class="stat-number gradient-text" data-target="50000">0</div>
-          <div class="stat-label">Transactions Processed Daily</div>
-        </div>
-      </div>
-      <div class="col-md-6 col-lg-3 reveal" style="transition-delay:0.15s;">
-        <div class="glass-card stat-card">
-          <div class="stat-icon fi-1"><i class="bi bi-shield-check"></i></div>
-          <div class="stat-number gradient-text" data-target="99" data-suffix=".9%">0</div>
-          <div class="stat-label">Platform Uptime Guaranteed</div>
-        </div>
-      </div>
-      <div class="col-md-6 col-lg-3 reveal" style="transition-delay:0.2s;">
-        <div class="glass-card stat-card">
-          <div class="stat-icon fi-4"><i class="bi bi-headset"></i></div>
-          <div class="stat-number gradient-text">24/7</div>
-          <div class="stat-label">Expert Support Available</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Value Propositions -->
-    <div class="row g-4">
-      <div class="col-md-4 reveal" style="transition-delay:0.05s;">
-        <div class="glass-card feature-card text-center">
-          <div class="feature-icon-wrap fi-2 mx-auto"><i class="bi bi-cloud-arrow-up"></i></div>
-          <div class="feature-card-title">Cloud-Based & Offline Ready</div>
-          <p class="feature-card-desc">Works seamlessly online and syncs automatically. Never lose data during internet outages.</p>
-        </div>
-      </div>
-      <div class="col-md-4 reveal" style="transition-delay:0.1s;">
-        <div class="glass-card feature-card text-center">
-          <div class="feature-icon-wrap fi-6 mx-auto"><i class="bi bi-phone"></i></div>
-          <div class="feature-card-title">Works on Any Device</div>
-          <p class="feature-card-desc">Optimized for Windows PCs, tablets, and Android devices. No expensive hardware required.</p>
-        </div>
-      </div>
-      <div class="col-md-4 reveal" style="transition-delay:0.15s;">
-        <div class="glass-card feature-card text-center">
-          <div class="feature-icon-wrap fi-7 mx-auto"><i class="bi bi-translate"></i></div>
-          <div class="feature-card-title">Urdu & English Interface</div>
-          <p class="feature-card-desc">Switch between Urdu and English UI at any time. Tailored for Pakistani pharmacy workflows.</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- =============================================
-     TESTIMONIALS
-============================================= -->
-<section id="testimonials">
-  <div class="container position-relative" style="z-index:2;">
-    <div class="text-center mb-5 reveal">
-      <div class="section-label"><span class="dot"></span>Customer Stories</div>
-      <h2 class="section-title">Medical Store Owners <span class="gradient-text">Love MediPOS</span></h2>
-    </div>
-
-    <div class="row g-4">
-      <div class="col-lg-4 reveal" style="transition-delay:0.05s;">
-        <div class="glass-card testimonial-card">
-          <div class="stars">★★★★★</div>
-          <p class="testimonial-text">"MediPOS transformed how we run our pharmacy. Inventory that used to take hours to audit now takes minutes. The expiry alerts alone have saved us thousands in waste."</p>
-          <div class="testimonial-author">
-            <div class="author-avatar" style="background:linear-gradient(135deg,#4f46e5,#3b82f6);">AK</div>
-            <div>
-              <div class="author-name">Ahmed Khan</div>
-              <div class="author-pos">Owner – Al-Noor Medical, Karachi</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-4 reveal" style="transition-delay:0.1s;">
-        <div class="glass-card testimonial-card">
-          <div class="stars">★★★★★</div>
-          <p class="testimonial-text">"The barcode scanning is lightning fast and the reporting dashboard gives me a complete picture of my business every morning. We expanded to 3 branches after switching to MediPOS."</p>
-          <div class="testimonial-author">
-            <div class="author-avatar" style="background:linear-gradient(135deg,#8b5cf6,#6366f1);">SR</div>
-            <div>
-              <div class="author-name">Sara Raza</div>
-              <div class="author-pos">Pharmacist – City Pharmacy, Lahore</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-4 reveal" style="transition-delay:0.15s;">
-        <div class="glass-card testimonial-card">
-          <div class="stars">★★★★★</div>
-          <p class="testimonial-text">"We tried two other POS systems before MediPOS. Nothing compares. The support team responds within the hour and the system has never gone down once in 8 months."</p>
-          <div class="testimonial-author">
-            <div class="author-avatar" style="background:linear-gradient(135deg,#06b6d4,#3b82f6);">MI</div>
-            <div>
-              <div class="author-name">Muhammad Imran</div>
-              <div class="author-pos">Manager – Health Plus Pharmacy, Islamabad</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- =============================================
-     CTA SECTION
-============================================= -->
-<section id="cta">
-  <div class="container position-relative" style="z-index:2;">
-    <div class="cta-inner reveal">
-      <div class="section-label mx-auto"><span class="dot"></span>Ready to get started?</div>
-      <h2 class="cta-title">
-        Start Managing Your Medical Store<br>
-        <span class="gradient-text">Smarter Today</span>
-      </h2>
-      <p class="cta-sub">Join 500+ pharmacies already growing their business with MediPOS. Setup takes less than 15 minutes.</p>
-      <div class="d-flex gap-3 justify-content-center flex-wrap">
-        <a href="#packages" class="btn-primary-custom">
-          <i class="bi bi-rocket-takeoff me-2"></i>Start Free Trial
-        </a>
-        <a href="#" class="btn-outline-custom">
-          <i class="bi bi-calendar-check me-2"></i>Book a Demo
-        </a>
-      </div>
-      <p style="font-size:0.82rem;color:var(--muted);margin-top:1.5rem;">
-        <i class="bi bi-shield-lock me-1"></i>No credit card required &nbsp;·&nbsp;
-        <i class="bi bi-arrow-counterclockwise me-1"></i>Cancel anytime &nbsp;·&nbsp;
-        <i class="bi bi-headset me-1"></i>Free onboarding support
+      <h3 style="color: white; margin-top: 30px; margin-bottom: 15px; font-size: 1.25rem;">7. Contact Us</h3>
+      <p style="color: var(--muted); line-height: 1.7; margin-bottom: 20px;">
+        If you have questions or comments about this Privacy Policy, please contact us at:<br><br>
+        <strong>MediPOS Software Team</strong><br>
+        <a href="mailto:mutechstudio1@gmail.com" style="color: var(--blue-light); text-decoration: none;"><i class="bi bi-envelope me-2"></i> mutechstudio1@gmail.com</a><br>
+        <a href="https://wa.me/923086452242" style="color: var(--blue-light); text-decoration: none;"><i class="bi bi-whatsapp me-2"></i> +92 308 645 2242</a>
       </p>
     </div>
   </div>
-</section>
-
-<!-- =============================================
+</section><!-- =============================================
      FOOTER
 ============================================= -->
 <footer id="footer">
@@ -1775,13 +1293,13 @@
       <!-- Contact -->
       <div class="col-6 col-lg-2">
         <div class="footer-heading">Contact</div>
-        <a href="mailto:mutechstudio1@gmail.com" class="footer-link"><i class="bi bi-envelope me-2"></i>mutechstudio1@gmail.com</a>
+      <a href="mailto:mutechstudio1@gmail.com" class="footer-link"><i class="bi bi-envelope me-2"></i>mutechstudio1@gmail.com</a>
         <a href="tel:+923086452242" class="footer-link"><i class="bi bi-telephone me-2"></i>+92 308 645 2242</a>
        <a href="https://wa.me/923086452242?text=Hello%20MediPOS%20Team,%20I%20would%20like%20to%20book%20a%20demo%20for%20your%20Medical%20POS%20Software." 
-        target="_blank" 
-        class="footer-link">
-          <i class="bi bi-whatsapp me-2"></i>WhatsApp Chat
-      </a>
+   target="_blank" 
+   class="footer-link">
+    <i class="bi bi-whatsapp me-2"></i>WhatsApp Chat
+</a>
         <a href="#" class="footer-link"><i class="bi bi-geo-alt me-2"></i>Faisalabad, Pakistan</a>
       </div>
 
