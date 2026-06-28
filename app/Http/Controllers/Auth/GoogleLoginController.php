@@ -9,6 +9,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
+use Illuminate\Support\Facades\Log;
+
 class GoogleLoginController extends Controller
 {
     /**
@@ -18,6 +20,7 @@ class GoogleLoginController extends Controller
      */
     public function redirectToGoogle()
     {
+        Log::info('Redirecting to Google for authentication.');
         return Socialite::driver('google')->redirect();
     }
 
@@ -29,31 +32,40 @@ class GoogleLoginController extends Controller
     public function handleGoogleCallback()
     {
         try {
+            Log::info('Google callback hit. Attempting to retrieve user from Google.');
             $googleUser = Socialite::driver('google')->user();
+            
+            Log::info('Successfully retrieved Google user.', [
+                'id' => $googleUser->id,
+                'email' => $googleUser->email,
+                'name' => $googleUser->name
+            ]);
 
             $user = User::where('google_id', $googleUser->id)->first();
 
             if ($user) {
-                // If user exists with google_id, log them in
+                Log::info('Existing user found with google_id. Logging in.', ['user_id' => $user->id]);
                 Auth::login($user);
-                return redirect()->intended('/home');
+                return $this->redirectUser($user);
             } else {
-                // Check if user exists with the same email
+                Log::info('No user found with google_id. Checking by email.', ['email' => $googleUser->email]);
+                
                 $existingUser = User::where('email', $googleUser->email)->first();
 
                 if ($existingUser) {
-                    // Update existing user with google_id
+                    Log::info('User found by email. Updating google_id and logging in.', ['user_id' => $existingUser->id]);
+                    
                     $existingUser->update([
                         'google_id' => $googleUser->id,
                         'google_token' => $googleUser->token,
                         'google_refresh_token' => $googleUser->refreshToken,
                     ]);
                     Auth::login($existingUser);
-                    return redirect()->intended('/home');
+                    return $this->redirectUser($existingUser);
                 }
 
-                // If user doesn't exist at all, create a new user
-                // You can also assign a default role if your app requires it (e.g., 'type' => 'store')
+                Log::info('No existing user found. Creating new user.');
+                
                 $newUser = User::create([
                     'name' => $googleUser->name,
                     'email' => $googleUser->email,
@@ -64,12 +76,35 @@ class GoogleLoginController extends Controller
                     'password' => bcrypt(Str::random(16)), 
                 ]);
 
+                Log::info('New user created successfully. Logging in.', ['user_id' => $newUser->id]);
+                
                 Auth::login($newUser);
-                return redirect()->intended('/home');
+                return $this->redirectUser($newUser);
             }
 
         } catch (\Exception $e) {
-            return redirect('/login')->with('error', 'Failed to authenticate with Google.');
+            Log::error('Error occurred in Google Callback.', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
+            return redirect('/login')->with('error', 'Failed to authenticate with Google. Error: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Determine redirect route based on user type.
+     */
+    private function redirectUser($user)
+    {
+        if ($user->type === 'admin') {
+            return redirect()->intended(route('admin.users.index', absolute: false));
+        }
+        if ($user->type === 'seller') {
+            return redirect()->intended(route('seller.dashboard', absolute: false));
+        }
+        return redirect()->intended(route('dashboard', absolute: false));
     }
 }
