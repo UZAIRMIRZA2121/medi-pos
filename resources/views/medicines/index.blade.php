@@ -16,7 +16,7 @@
         </div>
         <div class="table-wrap">
           <table class="table">
-            <thead><tr><th>Name</th><th>Generic</th><th>Category</th><th>Company</th><th>Batch</th><th>Sale Price</th><th>Stock</th><th>Expiry</th><th>Rx</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Name</th><th>Generic</th><th>Category</th><th>Company</th><th>Batch</th><th>Sale Price</th><th>Pack Stock</th><th>Pack Size</th><th>Expiry</th><th>Rx</th><th>Actions</th></tr></thead>
             <tbody id="medTbody"></tbody>
           </table>
         </div>

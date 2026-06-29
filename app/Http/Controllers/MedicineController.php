@@ -25,6 +25,10 @@ class MedicineController extends Controller
             "rack" => "nullable|string",
             "requires_prescription" => "boolean",
             "description" => "nullable|string",
+            "pack_purchase_price" => "nullable|numeric",
+            "pack_sale_price" => "nullable|numeric",
+            "pack_stock_quantity" => "nullable|integer",
+            "items_per_pack" => "nullable|integer",
         ]);
         $medicine = Medicine::create($data);
         return response()->json($medicine->load(["category", "supplier"]));
@@ -48,6 +52,10 @@ class MedicineController extends Controller
             "rack" => "nullable|string",
             "requires_prescription" => "boolean",
             "description" => "nullable|string",
+            "pack_purchase_price" => "nullable|numeric",
+            "pack_sale_price" => "nullable|numeric",
+            "pack_stock_quantity" => "nullable|integer",
+            "items_per_pack" => "nullable|integer",
         ]);
         $medicine->update($data);
         return response()->json($medicine->load(["category", "supplier"]));

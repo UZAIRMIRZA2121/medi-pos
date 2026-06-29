@@ -110,7 +110,11 @@
             </button>
             <button class="btn btn-ghost btn-full" onclick="clearCart()">Clear Cart</button>
             <label style="display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; cursor:pointer; color:var(--text-muted)">
-              <input type="checkbox" id="autoPrint" checked> Auto Print Thermal Receipt
+              <div class="custom-toggle">
+                <input type="checkbox" id="autoPrint" checked>
+                <span class="toggle-slider"></span>
+              </div>
+              Auto Print Thermal Receipt
             </label>
           </div>
         </div>

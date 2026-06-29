@@ -21,8 +21,8 @@
               <th>Order No</th>
               <th>Date</th>
               <th>Supplier</th>
-              <th>Total Items</th>
-              <th>Total Price</th>
+              <th>Total Packs</th>
+              <th>Purchase Price</th>
               <th>Notes</th>
               <th>Status</th>
               <th>Actions</th>
@@ -34,7 +34,7 @@
               <td><span class="badge" style="background:#e2e8f0;color:#1e293b;">{{ $order->order_number }}</span></td>
               <td>{{ $order->created_at->format('d M Y h:i A') }}</td>
               <td>{{ $order->supplier->name ?? 'Unknown' }}</td>
-              <td>{{ $order->total_items }}</td>
+              <td>{{ $order->items->sum('quantity') }}</td>
               <td style="font-weight:600;">Rs {{ number_format($order->total_amount, 2) }}</td>
               <td>
                 @if($order->notes)
@@ -55,6 +55,7 @@
               <td style="display: flex; gap: 5px;">
                 <button class="btn btn-sm btn-outline" onclick="openOrderDetails({{ $order->id }})">Details</button>
                 @if($order->status == 'pending')
+                  <button class="btn btn-sm" style="background:#e2e8f0;color:#000;" onclick="editPurchaseOrder({{ $order->id }})">Edit</button>
                   <button class="btn btn-sm btn-primary" onclick="markOrderReceived({{ $order->id }})">Received</button>
                 @endif
               </td>

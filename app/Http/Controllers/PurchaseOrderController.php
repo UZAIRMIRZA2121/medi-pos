@@ -46,7 +46,12 @@ class PurchaseOrderController extends Controller
         try {
             foreach ($order->items as $item) {
                 if ($item->medicine) {
-                    $item->medicine->increment('stock_quantity', $item->quantity);
+                    $units = $item->quantity * ($item->medicine->items_per_pack ?: 1);
+                    $item->medicine->increment('stock_quantity', $units);
+                    
+                    if ($item->medicine->pack_stock_quantity !== null) {
+                        $item->medicine->increment('pack_stock_quantity', $item->quantity);
+                    }
                 }
             }
             $order->update(['status' => 'received']);
@@ -86,14 +91,15 @@ class PurchaseOrderController extends Controller
         foreach ($request->items as $item) {
             $medicine = \App\Models\Medicine::find($item['id']);
             if ($medicine) {
-                $subtotal = $medicine->purchase_price * $item['qty'];
+                $price = $medicine->pack_purchase_price > 0 ? $medicine->pack_purchase_price : ($medicine->purchase_price * ($medicine->items_per_pack ?: 1));
+                $subtotal = $price * $item['qty'];
                 $totalAmount += $subtotal;
 
                 \App\Models\PurchaseOrderItem::create([
                     'purchase_order_id' => $order->id,
                     'medicine_id' => $medicine->id,
                     'quantity' => $item['qty'],
-                    'purchase_price' => $medicine->purchase_price ?? 0,
+                    'purchase_price' => $price,
                     'subtotal' => $subtotal
                 ]);
             }
@@ -106,5 +112,39 @@ class PurchaseOrderController extends Controller
             'order_number' => $order->order_number,
             'message' => 'Purchase order saved successfully.'
         ]);
+    }
+
+    public function update(Request $request, $id) {
+        $order = \App\Models\PurchaseOrder::where('user_id', auth()->id())->findOrFail($id);
+        
+        if ($order->status !== 'pending') {
+            return response()->json(['success' => false, 'message' => 'Cannot edit processed orders.']);
+        }
+        
+        $request->validate([
+            'items' => 'required|array',
+            'items.*.id' => 'required|exists:purchase_order_items,id',
+            'items.*.qty' => 'required|integer|min:1'
+        ]);
+        
+        $totalAmount = 0;
+        
+        foreach ($request->items as $itemData) {
+            $item = \App\Models\PurchaseOrderItem::where('purchase_order_id', $order->id)->find($itemData['id']);
+            if ($item) {
+                $subtotal = $item->purchase_price * $itemData['qty'];
+                $totalAmount += $subtotal;
+                $item->update([
+                    'quantity' => $itemData['qty'],
+                    'subtotal' => $subtotal
+                ]);
+            }
+        }
+        
+        $order->update([
+            'total_amount' => $totalAmount
+        ]);
+        
+        return response()->json(['success' => true, 'message' => 'Purchase order updated successfully.']);
     }
 }

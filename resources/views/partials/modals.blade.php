@@ -14,10 +14,14 @@
         <div class="form-group"><label>Company / Brand</label><input type="text" id="medCompany" class="input" placeholder="Manufacturer"/></div>
         <div class="form-group"><label>Batch Number</label><input type="text" id="medBatch" class="input"/></div>
         <div class="form-group"><label>Barcode</label><input type="text" id="medBarcode" class="input"/></div>
-        <div class="form-group"><label>Purchase Price (PKR)</label><input type="number" id="medPurchase" class="input" min="0" step="0.01"/></div>
-        <div class="form-group"><label>Sale Price (PKR) *</label><input type="number" id="medSale" class="input" min="0" step="0.01"/></div>
-        <div class="form-group"><label>Stock Quantity *</label><input type="number" id="medStock" class="input" min="0"/></div>
-        <div class="form-group"><label>Low Stock Level</label><input type="number" id="medLowStock" class="input" min="0" value="10"/></div>
+        <div class="form-group" style="display: none;"><label>Purchase Price (PKR)</label><input type="number" id="medPurchase" class="input" min="0" step="0.01"/></div>
+        <div class="form-group" style="display: none;"><label>Sale Price (PKR) *</label><input type="number" id="medSale" class="input" min="0" step="0.01"/></div>
+        <div class="form-group" style="display: none;"><label>Stock Quantity *</label><input type="number" id="medStock" class="input" min="0"/></div>
+        <div class="form-group"><label>Low Stock Level (Packs)</label><input type="number" id="medLowStock" class="input" min="0" value="10"/></div>
+        <div class="form-group"><label>Purchase Price Per Pack</label><input type="number" id="medPackPurchase" class="input" min="0" step="0.01"/></div>
+        <div class="form-group"><label>Sale Price Per Pack</label><input type="number" id="medPackSale" class="input" min="0" step="0.01"/></div>
+        <div class="form-group"><label>Pack Stock Qty</label><input type="number" id="medPackStock" class="input" min="0"/></div>
+        <div class="form-group"><label>Items Per Pack</label><input type="number" id="medItemsPerPack" class="input" min="1" value="1"/></div>
         <div class="form-group"><label>Expiry Date *</label><input type="date" id="medExpiry" class="input"/></div>
         <div class="form-group"><label>Manufacturing Date</label><input type="date" id="medMfg" class="input"/></div>
         <div class="form-group"><label>Supplier</label><select id="medSupplier" class="input"><option value="">Select supplier</option></select></div>
@@ -129,7 +133,7 @@
           <thead>
             <tr>
               <th>Medicine</th>
-              <th>Order Qty</th>
+              <th>Order Qty (Packs)</th>
               <th width="50"></th>
             </tr>
           </thead>
@@ -166,7 +170,7 @@
           <thead>
             <tr>
               <th>Medicine</th>
-              <th>Quantity</th>
+              <th>Quantity (Packs)</th>
             </tr>
           </thead>
           <tbody id="detailOrderItemsTbody">
@@ -177,6 +181,36 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="document.getElementById('purchaseOrderDetailsModal').classList.add('hidden');">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Purchase Order Modal -->
+<div id="editPurchaseOrderModal" class="modal-overlay hidden">
+  <div class="modal" style="max-width: 600px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit Purchase Order</h3>
+      <button class="close-btn" onclick="document.getElementById('editPurchaseOrderModal').classList.add('hidden');">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editOrderId" value="">
+      <div class="table-responsive">
+        <table class="table w-full">
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Quantity (Packs)</th>
+            </tr>
+          </thead>
+          <tbody id="editOrderItemsTbody">
+            <!-- Items populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('editPurchaseOrderModal').classList.add('hidden');">Cancel</button>
+      <button class="btn btn-primary" onclick="savePurchaseOrderEdit()">Save Changes</button>
     </div>
   </div>
 </div>

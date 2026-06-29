@@ -139,7 +139,7 @@ async function syncData() {
         
         // Map DB columns to frontend expected fields if necessary
         // The frontend expects: catId instead of category_id, supplierId instead of supplier_id
-        const mappedMeds = meds.map(m => ({...m, catId: m.category_id, supplierId: m.supplier_id, stock: m.stock_quantity, lowStock: m.low_stock_level, sale: m.sale_price, purchase: m.purchase_price, expiry: m.expiry_date, mfg: m.mfg_date, generic: m.generic_name }));
+        const mappedMeds = meds.map(m => ({...m, catId: m.category_id, supplierId: m.supplier_id, stock: m.stock_quantity, lowStock: m.low_stock_level, sale: m.sale_price, purchase: m.purchase_price, expiry: m.expiry_date, mfg: m.mfg_date, generic: m.generic_name, packPurchase: m.pack_purchase_price, packSale: m.pack_sale_price, packStock: m.pack_stock_quantity, itemsPerPack: m.items_per_pack }));
         
         store.set('categories', cats);
         store.set('medicines', mappedMeds);
@@ -265,6 +265,7 @@ function svgIcon(path, size = 13) { return `<svg width="${size}" height="${size}
 
 const EDIT_SVG = svgIcon('<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>');
 const DEL_SVG = svgIcon('<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/>');
+const ORDER_SVG = svgIcon('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>');
 const VIEW_SVG = svgIcon('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>');
 
 // ============================================================
@@ -481,7 +482,22 @@ function changeQty(medId, delta) {
   item.qty = newQty;
   item.sub = item.qty * item.price;
   renderCart();
-  renderMedGrid();
+}
+
+function setQty(medId, qtyValue) {
+  const item = cart.find(c => c.medId == medId);
+  if (!item) return;
+  const newQty = parseInt(qtyValue, 10);
+  if (isNaN(newQty) || newQty <= 0) { 
+    item.qty = 1; 
+  } else if (newQty > item.maxStock) { 
+    toast('Not enough stock!', 'warning'); 
+    item.qty = item.maxStock;
+  } else {
+    item.qty = newQty;
+  }
+  item.sub = item.qty * item.price;
+  renderCart();
 }
 
 function removeFromCart(medId) {
@@ -520,7 +536,7 @@ function renderCart() {
       <td>
         <div class="qty-control">
           <button class="qty-btn" onclick="changeQty(${item.medId}, -1)">−</button>
-          <span class="qty-display">${item.qty}</span>
+          <input type="number" class="qty-display" style="border: 1px solid var(--border); background: var(--surface); color: var(--text); padding: 0; text-align: center; border-radius: 4px; height: 24px; width: 50px;" min="1" value="${item.qty}" onchange="setQty(${item.medId}, this.value)">
           <button class="qty-btn" onclick="changeQty(${item.medId}, 1)">+</button>
         </div>
       </td>
@@ -1168,19 +1184,23 @@ function renderMedicines() {
         <td style="font-family:var(--mono);font-size:12px">${m.batch || '-'}</td>
         <td style="font-weight:600">${fmtCur(m.sale)}</td>
         <td>
-          <span class="badge ${low ? 'badge-warning' : m.stock === 0 ? 'badge-danger' : 'badge-success'}">${m.stock}</span>
+          <span class="badge ${low ? 'badge-warning' : Math.floor(m.stock / (m.itemsPerPack || 1)) <= 0 ? 'badge-danger' : 'badge-success'}">
+            ${Math.floor(m.stock / (m.itemsPerPack || 1))} <span style="font-size: 0.9em; opacity: 0.8; margin-left: 3px;">(${m.stock % (m.itemsPerPack || 1)})</span>
+          </span>
         </td>
+        <td style="text-align: center;">${m.itemsPerPack || 1}</td>
         <td>
           <span class="badge ${exp ? 'badge-danger' : d <= 30 ? 'badge-warning' : 'badge-success'}">${fmtDate(m.expiry)}</span>
         </td>
         <td>${m.rx === 'yes' ? '<span class="badge badge-info">Rx</span>' : '<span class="badge badge-gray">OTC</span>'}</td>
         <td>
+          <button class="action-btn" style="color:var(--primary)" onclick="openMedicineOrderModal(${m.id})" title="Purchase Order">${ORDER_SVG}</button>
           <button class="action-btn edit" onclick="openMedModal(${m.id})" title="Edit">${EDIT_SVG}</button>
           <button class="action-btn del" onclick="deleteMedicine(${m.id})" title="Delete">${DEL_SVG}</button>
         </td>
       </tr>`;
     }).join('') :
-    '<tr><td colspan="10" class="empty-cell">No medicines found</td></tr>';
+    '<tr><td colspan="11" class="empty-cell">No medicines found</td></tr>';
 }
 
 function openMedModal(id) {
@@ -1203,19 +1223,24 @@ function openMedModal(id) {
     document.getElementById('medPurchase').value = m.purchase || '';
     document.getElementById('medSale').value = m.sale;
     document.getElementById('medStock').value = m.stock;
-    document.getElementById('medLowStock').value = m.lowStock || 10;
+    document.getElementById('medLowStock').value = m.lowStock ? Math.floor(m.lowStock / (m.itemsPerPack || 1)) : 10;
     document.getElementById('medExpiry').value = m.expiry;
     document.getElementById('medMfg').value = m.mfg || '';
     document.getElementById('medSupplier').value = m.supplierId || '';
     document.getElementById('medRack').value = m.rack || '';
     document.getElementById('medRx').value = m.rx || 'no';
     document.getElementById('medDesc').value = m.desc || '';
+    document.getElementById('medPackPurchase').value = m.packPurchase || '';
+    document.getElementById('medPackSale').value = m.packSale || '';
+    document.getElementById('medPackStock').value = Math.floor(m.stock / (m.itemsPerPack || 1));
+    document.getElementById('medItemsPerPack').value = m.itemsPerPack || 1;
   } else {
     document.getElementById('medModalTitle').textContent = 'Add Medicine';
     document.getElementById('medId').value = '';
-    ['medName','medGeneric','medCompany','medBatch','medBarcode','medPurchase','medSale','medStock','medExpiry','medMfg','medRack','medDesc'].forEach(id => document.getElementById(id).value = '');
+    ['medName','medGeneric','medCompany','medBatch','medBarcode','medPurchase','medSale','medStock','medExpiry','medMfg','medRack','medDesc','medPackPurchase','medPackSale','medPackStock'].forEach(id => document.getElementById(id).value = '');
     document.getElementById('medLowStock').value = 10;
     document.getElementById('medRx').value = 'no';
+    document.getElementById('medItemsPerPack').value = 1;
   }
   document.getElementById('medModal').classList.remove('hidden');
 }
@@ -1224,9 +1249,11 @@ function closeMedModal() { document.getElementById('medModal').classList.add('hi
 async function saveMedicine() {
   const name = document.getElementById('medName').value.trim();
   const catId = document.getElementById('medCat').value;
-  const sale = document.getElementById('medSale').value;
+  const packSale = parseFloat(document.getElementById('medPackSale').value) || 0;
+  const itemsPerPack = parseInt(document.getElementById('medItemsPerPack').value) || 1;
+  const sale = packSale / itemsPerPack;
   
-  if (!name || !catId || !sale) { toast('Name, Category, and Sale Price required!', 'warning'); return; }
+  if (!name || !catId || !packSale) { toast('Name, Category, and Pack Sale Price required!', 'warning'); return; }
   
   const editId = document.getElementById('medId').value;
   const data = {
@@ -1237,10 +1264,14 @@ async function saveMedicine() {
     company: document.getElementById('medCompany').value.trim(),
     batch_number: document.getElementById('medBatch').value.trim(),
     barcode: document.getElementById('medBarcode').value.trim(),
-    purchase_price: document.getElementById('medPurchase').value || 0,
+    pack_purchase_price: parseFloat(document.getElementById('medPackPurchase').value) || 0,
+    pack_sale_price: packSale,
+    pack_stock_quantity: parseInt(document.getElementById('medPackStock').value) || 0,
+    items_per_pack: itemsPerPack,
+    purchase_price: (parseFloat(document.getElementById('medPackPurchase').value) || 0) / itemsPerPack,
     sale_price: sale,
-    stock_quantity: document.getElementById('medStock').value || 0,
-    low_stock_level: document.getElementById('medLowStock').value || 10,
+    stock_quantity: (parseInt(document.getElementById('medPackStock').value) || 0) * itemsPerPack,
+    low_stock_level: (parseInt(document.getElementById('medLowStock').value) || 10) * itemsPerPack,
     expiry_date: document.getElementById('medExpiry').value || null,
     mfg_date: document.getElementById('medMfg').value || null,
     rack: document.getElementById('medRack').value.trim(),
@@ -1609,12 +1640,12 @@ function openSupplierOrderModal(supplierId) {
       <tr>
         <td style="font-weight:500">
           ${m.name}
-          <div style="font-size: 0.8em; color: var(--muted)">Current Stock: ${m.stock}</div>
+          <div style="font-size: 0.8em; color: var(--muted)">Remaining Packs: ${Math.floor(m.stock / (m.itemsPerPack || 1))}</div>
         </td>
         <td>
           <input type="hidden" name="med_id[]" value="${m.id}">
           <input type="hidden" name="med_name[]" value="${m.name}">
-          <input type="number" class="input order-qty" name="med_qty[]" min="1" value="${Math.max(1, (m.lowStock * 2) - m.stock)}" style="width: 80px; padding: 6px 12px; text-align: center;">
+          <input type="number" class="input order-qty" name="med_qty[]" min="1" value="${Math.ceil(Math.max(1, (m.lowStock * 2) - m.stock) / (m.itemsPerPack || 1))}" style="width: 80px; padding: 6px 12px; text-align: center;">
         </td>
         <td style="text-align: right;">
           <button type="button" class="action-btn del" onclick="this.closest('tr').remove()" title="Remove">${DEL_SVG}</button>
@@ -1622,6 +1653,37 @@ function openSupplierOrderModal(supplierId) {
       </tr>
     `).join('');
   }
+  
+  document.getElementById('supplierOrderModal').classList.remove('hidden');
+}
+
+function openMedicineOrderModal(medId) {
+  const m = store.get('medicines').find(x => x.id == medId);
+  if (!m) return;
+  const supplierId = m.supplierId;
+  const supplier = getSupplier(supplierId) || { name: 'Unknown', id: supplierId };
+  
+  document.getElementById('orderSupplierName').textContent = supplier.name;
+  document.getElementById('orderSupplierId').value = supplier.id || '';
+
+  const tbody = document.getElementById('supplierOrderTbody');
+  
+  tbody.innerHTML = `
+    <tr>
+      <td style="font-weight:500">
+        ${m.name}
+        <div style="font-size: 0.8em; color: var(--muted)">Remaining Packs: ${Math.floor(m.stock / (m.itemsPerPack || 1))}</div>
+      </td>
+      <td>
+        <input type="hidden" name="med_id[]" value="${m.id}">
+        <input type="hidden" name="med_name[]" value="${m.name}">
+        <input type="number" class="input order-qty" name="med_qty[]" min="1" value="${Math.ceil(Math.max(1, (m.lowStock * 2) - m.stock) / (m.itemsPerPack || 1))}" style="width: 80px; padding: 6px 12px; text-align: center;">
+      </td>
+      <td style="text-align: right;">
+        <button type="button" class="action-btn del" onclick="this.closest('tr').remove()" title="Remove">${DEL_SVG}</button>
+      </td>
+    </tr>
+  `;
   
   document.getElementById('supplierOrderModal').classList.remove('hidden');
 }
@@ -1742,7 +1804,7 @@ async function printSupplierOrder() {
                   <tr>
                     <th class="text-left" style="width: 10%;">#</th>
                     <th class="text-left" style="width: 70%;">ITEM DESCRIPTION</th>
-                    <th class="text-right" style="width: 20%;">QTY</th>
+                    <th class="text-right" style="width: 20%;">PACKS</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1764,7 +1826,7 @@ async function printSupplierOrder() {
                   <span>${items.length}</span>
                 </div>
                 <div class="totals-row">
-                  <span>TOTAL UNITS:</span>
+                  <span>TOTAL PACKS:</span>
                   <span>${items.reduce((sum, i) => sum + parseInt(i.qty), 0)}</span>
                 </div>
               </div>
@@ -2016,5 +2078,80 @@ async function markOrderReceived(id) {
         } else {
             toast('Failed to process order', 'error');
         }
+    }
+}
+
+async function editPurchaseOrder(id) {
+    try {
+        const response = await fetch(`/purchase-orders/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch order details');
+        
+        const order = await response.json();
+        
+        document.getElementById('editOrderId').value = id;
+        const tbody = document.getElementById('editOrderItemsTbody');
+        tbody.innerHTML = '';
+        
+        if (order.items && order.items.length > 0) {
+            order.items.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>
+                        <div class="font-medium">${item.medicine ? item.medicine.name : 'Unknown Medicine'}</div>
+                        <input type="hidden" name="edit_med_id[]" value="${item.id}">
+                    </td>
+                    <td>
+                        <input type="number" class="input edit-order-qty" name="edit_med_qty[]" min="1" value="${item.quantity}" style="width: 80px; padding: 6px 12px; text-align: center;">
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } else {
+            tbody.innerHTML = '<tr><td colspan="2" class="text-center text-gray-500">No items found</td></tr>';
+        }
+        
+        document.getElementById('editPurchaseOrderModal').classList.remove('hidden');
+    } catch (error) {
+        console.error(error);
+        toast('Error loading order for edit', 'error');
+    }
+}
+
+async function savePurchaseOrderEdit() {
+    const id = document.getElementById('editOrderId').value;
+    const rows = document.querySelectorAll('#editOrderItemsTbody tr');
+    
+    const items = [];
+    rows.forEach(tr => {
+        const idInput = tr.querySelector('input[name="edit_med_id[]"]');
+        const qtyInput = tr.querySelector('.edit-order-qty');
+        
+        if (idInput && qtyInput) {
+            items.push({ id: idInput.value, qty: qtyInput.value });
+        }
+    });
+    
+    try {
+        const response = await fetch(`/purchase-orders/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ items: items })
+        });
+        
+        const data = await response.json();
+        if (response.ok && data.success) {
+            toast(data.message, 'success');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            toast(data.message || 'Error updating order', 'error');
+        }
+    } catch (error) {
+        console.error(error);
+        toast('Failed to update order', 'error');
     }
 }

@@ -60,6 +60,7 @@ Route::middleware(['auth', 'role:store', 'subscription.active'])->group(function
     Route::get('/purchase-orders', [App\Http\Controllers\PurchaseOrderController::class, 'index'])->name('purchase_orders.index');
     Route::post('/purchase-orders', [App\Http\Controllers\PurchaseOrderController::class, 'store'])->name('purchase_orders.store');
     Route::get('/purchase-orders/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'show'])->name('purchase_orders.show');
+    Route::put('/purchase-orders/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'update'])->name('purchase_orders.update');
     Route::post('/purchase-orders/{id}/receive', [App\Http\Controllers\PurchaseOrderController::class, 'receive'])->name('purchase_orders.receive');
 
 
