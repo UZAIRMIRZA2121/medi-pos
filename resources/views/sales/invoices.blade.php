@@ -18,7 +18,7 @@
         </div>
         <div class="table-wrap">
           <table class="table">
-            <thead><tr><th>Invoice#</th><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th><th>Due</th><th>Payment</th><th>Date</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Invoice#</th><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th><th>Due</th><th>Return</th><th>Payment</th><th>Date</th><th>Actions</th></tr></thead>
             <tbody id="invoicesTbody"></tbody>
           </table>
         </div>

@@ -129,12 +129,13 @@ async function api(url, method = 'GET', body = null) {
 
 async function syncData() {
     try {
-        const [cats, meds, supps, custs, sales] = await Promise.all([
+        const [cats, meds, supps, custs, sales, staffData] = await Promise.all([
             api('/api/categories'),
             api('/api/medicines'),
             api('/api/suppliers'),
             api('/api/customers'),
-            api('/api/sales')
+            api('/api/sales'),
+            api('/api/staff').catch(() => [])
         ]);
         
         // Map DB columns to frontend expected fields if necessary
@@ -146,6 +147,7 @@ async function syncData() {
         store.set('suppliers', supps);
         store.set('customers', custs);
         store.set('invoices', sales);
+        store.set('staff', staffData);
         
         if (document.getElementById('page-categories')) renderCategories();
         if (document.getElementById('page-medicines')) renderMedicines();
@@ -155,6 +157,7 @@ async function syncData() {
         if (document.getElementById('page-sales')) renderSales();
         if (document.getElementById('page-invoices')) renderInvoices();
         if (document.getElementById('page-pos')) renderPOS();
+        if (document.getElementById('page-staff')) renderStaff();
 
     } catch(e) {
         console.error('Failed to sync data', e);
@@ -267,6 +270,9 @@ const EDIT_SVG = svgIcon('<path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 
 const DEL_SVG = svgIcon('<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/>');
 const ORDER_SVG = svgIcon('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline>');
 const VIEW_SVG = svgIcon('<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>');
+const REFUND_SVG = svgIcon('<path d="M3 7v6h6"></path><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"></path>');
+const OTP_SVG = svgIcon('<path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>');
+const LOGOUT_SVG = svgIcon('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line>');
 
 // ============================================================
 // ALERT BADGE UPDATE
@@ -735,6 +741,8 @@ function buildInvoiceHTML(inv) {
  const sFooter = (window.printSettings?.footer || "Thank You!\nGet Well Soon.").replace(/\n/g, '<br>');
   const sLogo = window.printSettings?.logo ? `<img src="${window.printSettings.logo}" style="max-height:40px; margin-bottom: 5px;">` : `<div class="r-logo">${sName.charAt(0)}</div>`;
 
+  const isRefund = String(inv.id).startsWith('REF-') || inv.payment === 'refund';
+
   return `<div class="receipt" id="invoicePrintArea">
 
     <!-- Header -->
@@ -782,15 +790,15 @@ function buildInvoiceHTML(inv) {
 
     <!-- Totals -->
     <table class="r-totals">
-      <tr><td>Subtotal</td><td>${fmtCur(inv.subtotal)}</td></tr>
-      ${inv.discount > 0 ? `<tr><td>Discount (${inv.discount}%)</td><td>- ${fmtCur(inv.discAmt)}</td></tr>` : ''}
-      ${inv.tax > 0 ? `<tr><td>Tax (${inv.tax}%)</td><td>+ ${fmtCur(inv.taxAmt)}</td></tr>` : ''}
+      <tr><td>Subtotal</td><td>${fmtCur(Math.abs(inv.subtotal))}</td></tr>
+      ${inv.discount > 0 ? `<tr><td>Discount (${inv.discount}%)</td><td>- ${fmtCur(Math.abs(inv.discAmt))}</td></tr>` : ''}
+      ${inv.tax > 0 ? `<tr><td>Tax (${inv.tax}%)</td><td>+ ${fmtCur(Math.abs(inv.taxAmt))}</td></tr>` : ''}
     </table>
 
     <hr class="r-divider-double"/>
 
     <table class="r-totals">
-      <tr class="r-grand"><td>GRAND TOTAL</td><td>${fmtCur(inv.grand)}</td></tr>
+      <tr class="r-grand"><td ${isRefund ? 'style="color:red; font-weight:bold;"' : ''}>${isRefund ? 'REFUND TOTAL' : 'GRAND TOTAL'}</td><td ${isRefund ? 'style="color:red; font-weight:bold;"' : ''}>${fmtCur(Math.abs(inv.grand))}</td></tr>
     </table>
 
     <hr class="r-divider"/>
@@ -798,7 +806,7 @@ function buildInvoiceHTML(inv) {
     <table class="r-totals">
       <tr class="r-paid"><td>Paid (${inv.payment})</td><td>${fmtCur(inv.paid)}</td></tr>
       ${inv.due > 0 ? `<tr class="r-due"><td>Due Amount</td><td>${fmtCur(inv.due)}</td></tr>` : ''}
-      ${inv.ret > 0 ? `<tr class="r-ret"><td>Return</td><td>${fmtCur(inv.ret)}</td></tr>` : ''}
+      ${inv.ret > 0 ? `<tr class="r-ret"><td ${isRefund ? 'style="color:red; font-weight:bold;"' : ''}>${isRefund ? 'Refunded Amount' : 'Return'}</td><td ${isRefund ? 'style="color:red; font-weight:bold;"' : ''}>${isRefund ? '- ' : ''}${fmtCur(inv.ret)}</td></tr>` : ''}
     </table>
 
     ${inv.notes ? `<hr class="r-divider"/><div class="r-notes"><strong>Note:</strong> ${inv.notes}</div>` : ''}
@@ -882,14 +890,16 @@ function renderInvoices() {
       <td style="font-weight:600">${fmtCur(i.grand)}</td>
       <td style="color:var(--success)">${fmtCur(i.paid)}</td>
       <td style="color:${i.due > 0 ? 'var(--danger)' : 'var(--text-muted)'}">${fmtCur(i.due)}</td>
+      <td style="color:${i.ret > 0 ? 'var(--info)' : 'var(--text-muted)'}">${fmtCur(i.ret)}</td>
       <td><span class="badge badge-gray" style="text-transform:capitalize">${i.payment}</span></td>
       <td>${fmtDateTime(i.date)}</td>
       <td>
         <button class="action-btn view" onclick="viewInvoice('${i.id}')" title="View">${VIEW_SVG}</button>
+        <button class="action-btn" style="color:var(--warning)" onclick="openRefundModal('${i.id}')" title="Refund">${REFUND_SVG}</button>
         <button class="action-btn del" onclick="deleteInvoice('${i.id}')" title="Delete">${DEL_SVG}</button>
       </td>
     </tr>`).join('') :
-    '<tr><td colspan="9" class="empty-cell">No invoices found</td></tr>';
+    '<tr><td colspan="10" class="empty-cell">No invoices found</td></tr>';
 }
 
 function viewInvoice(invId) {
@@ -905,6 +915,156 @@ function deleteInvoice(invId) {
     renderInvoices();
   });
 }
+
+function openRefundModal(invId) {
+  const inv = store.get('invoices').find(i => i.id === invId);
+  if (!inv) return;
+  
+  document.getElementById('refundInvoiceNumber').textContent = inv.id;
+  document.getElementById('refundInvoiceId').value = inv.id;
+  
+  const tbody = document.getElementById('refundItemsTbody');
+  if (inv.items.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-cell">No items in this invoice</td></tr>';
+  } else {
+    tbody.innerHTML = inv.items.map(item => `
+      <tr data-med-id="${item.medicine_id}" data-price="${item.price}">
+        <td style="font-weight:500">${item.name}</td>
+        <td>${fmtCur(item.price)}</td>
+        <td>${item.qty}</td>
+        <td>
+          <input type="number" class="input input-sm refund-qty" min="0" max="${item.qty}" value="0" style="width:70px" oninput="calculateRefundTotal()">
+        </td>
+        <td>
+          <button class="action-btn del" onclick="this.closest('tr').querySelector('.refund-qty').value = ${item.qty}; calculateRefundTotal();" title="Refund All">${DEL_SVG}</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+  
+  document.getElementById('refundModal').classList.remove('hidden');
+  
+  const paidElem = document.getElementById('refPaidAmt');
+  const returnElem = document.getElementById('refChangeAmt');
+  if (paidElem) paidElem.textContent = fmtCur(inv.paid);
+  if (returnElem) returnElem.textContent = fmtCur(inv.ret);
+  
+  calculateRefundTotal();
+}
+
+function calculateRefundTotal() {
+  const rows = document.querySelectorAll('#refundItemsTbody tr');
+  let totalRefund = 0;
+  
+  rows.forEach(tr => {
+    const price = parseFloat(tr.getAttribute('data-price')) || 0;
+    const refQty = parseInt(tr.querySelector('.refund-qty')?.value) || 0;
+    totalRefund += price * refQty;
+  });
+  
+  const totalElem = document.getElementById('refTotalAmountToReturn');
+  if (totalElem) totalElem.textContent = fmtCur(totalRefund);
+}
+
+async function saveRefundChanges() {
+  const invId = document.getElementById('refundInvoiceId').value;
+  const rows = document.querySelectorAll('#refundItemsTbody tr');
+  const refunds = [];
+  let hasRefund = false;
+  
+  rows.forEach(tr => {
+    const medId = tr.getAttribute('data-med-id');
+    if (!medId) return;
+    const refQty = parseInt(tr.querySelector('.refund-qty').value) || 0;
+    if (refQty > 0) {
+      refunds.push({ medicine_id: medId, refund_qty: refQty });
+      hasRefund = true;
+    }
+  });
+  
+  if (!hasRefund) {
+    toast('Please enter quantity to refund for at least one item.', 'warning');
+    return;
+  }
+  
+  Swal.fire({
+    title: 'Process Refund?',
+    text: 'Are you sure you want to process this partial refund?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: 'Yes, process it!'
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch('/api/sales/' + invId + '/refund', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify({ type: 'partial', items: refunds })
+        });
+        
+        const data = await response.json();
+        if (response.ok && data.success) {
+          toast(data.message, 'success');
+          document.getElementById('refundModal').classList.add('hidden');
+          api('/api/sales').then(res => {
+            store.set('invoices', res);
+            renderInvoices();
+          });
+        } else {
+          toast(data.message || 'Refund failed', 'error');
+        }
+      } catch(e) {
+        toast('Error processing refund', 'error');
+      }
+    }
+  });
+}
+
+async function completeFullRefund() {
+  const invId = document.getElementById('refundInvoiceId').value;
+  Swal.fire({
+    title: 'Refund ENTIRE Invoice?',
+    text: 'Are you sure you want to refund this entire invoice? This will restock all items.',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Yes, refund everything!'
+  }).then(async (result) => {
+    if (result.isConfirmed) {
+      try {
+        const response = await fetch('/api/sales/' + invId + '/refund', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+          },
+          body: JSON.stringify({ type: 'full' })
+        });
+        
+        const data = await response.json();
+        if (response.ok && data.success) {
+          toast(data.message, 'success');
+          document.getElementById('refundModal').classList.add('hidden');
+          api('/api/sales').then(res => {
+            store.set('invoices', res);
+            renderInvoices();
+          });
+        } else {
+          toast(data.message || 'Refund failed', 'error');
+        }
+      } catch(e) {
+        toast('Error processing refund', 'error');
+      }
+    }
+  });
+}
+
 
 document.addEventListener('DOMContentLoaded', () => {
   const invSearch = document.getElementById('invoiceSearch');
@@ -1441,6 +1601,7 @@ function renderSuppliers() {
       <td>${s.email || '-'}</td>
       <td>${s.address || '-'}</td>
       <td>
+        <button class="action-btn" style="color:var(--primary)" onclick="openSupplierOrderModal(${s.id})" title="Purchase Order">${ORDER_SVG}</button>
         <button class="action-btn edit" onclick="openSuppModal(${s.id})">${EDIT_SVG}</button>
         <button class="action-btn del" onclick="deleteSupplier(${s.id})">${DEL_SVG}</button>
       </td>
@@ -1659,32 +1820,42 @@ function openSupplierOrderModal(supplierId) {
   }
 
   const meds = store.get('medicines').filter(m => m.supplierId == supplierId);
-  const orderMeds = meds.filter(m => isLowStock(m) || isExpired(m.expiry) || (daysDiff(m.expiry) >= 0 && daysDiff(m.expiry) <= 30));
   
   document.getElementById('orderSupplierName').textContent = supplier.name;
   document.getElementById('orderSupplierId').value = supplierId;
 
   const tbody = document.getElementById('supplierOrderTbody');
   
-  if (orderMeds.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" class="empty-cell">No medicines need ordering</td></tr>';
+  if (meds.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="empty-cell">No medicines found for this supplier</td></tr>';
   } else {
-    tbody.innerHTML = orderMeds.map((m, idx) => `
+    tbody.innerHTML = meds.map((m, idx) => {
+      let badges = [];
+      if (isLowStock(m)) badges.push('<span class="badge badge-warning" style="font-size:0.7em; padding:2px 4px; margin-right:4px;">Low Stock</span>');
+      if (isExpired(m.expiry)) badges.push('<span class="badge badge-danger" style="font-size:0.7em; padding:2px 4px; margin-right:4px;">Expired</span>');
+      else if (daysDiff(m.expiry) >= 0 && daysDiff(m.expiry) <= 30) badges.push('<span class="badge badge-warning" style="font-size:0.7em; padding:2px 4px; margin-right:4px;">Expiring Soon</span>');
+      
+      const badgeHtml = badges.length ? `<div style="margin-top:4px;">${badges.join('')}</div>` : '';
+      const orderQty = Math.ceil(Math.max(1, (m.lowStock * 2) - m.stock) / (m.itemsPerPack || 1));
+      
+      return `
       <tr>
         <td style="font-weight:500">
           ${m.name}
           <div style="font-size: 0.8em; color: var(--muted)">Remaining Packs: ${Math.floor(m.stock / (m.itemsPerPack || 1))}</div>
+          ${badgeHtml}
         </td>
         <td>
           <input type="hidden" name="med_id[]" value="${m.id}">
           <input type="hidden" name="med_name[]" value="${m.name}">
-          <input type="number" class="input order-qty" name="med_qty[]" min="1" value="${Math.ceil(Math.max(1, (m.lowStock * 2) - m.stock) / (m.itemsPerPack || 1))}" style="width: 80px; padding: 6px 12px; text-align: center;">
+          <input type="number" class="input order-qty" name="med_qty[]" min="0" value="${orderQty}" style="width: 80px; padding: 6px 12px; text-align: center;">
         </td>
         <td style="text-align: right;">
           <button type="button" class="action-btn del" onclick="this.closest('tr').remove()" title="Remove">${DEL_SVG}</button>
         </td>
       </tr>
-    `).join('');
+      `;
+    }).join('');
   }
   
   document.getElementById('supplierOrderModal').classList.remove('hidden');
@@ -2249,4 +2420,223 @@ async function deletePurchaseOrder(id) {
             }
         }
     });
+}
+
+// ============================================================
+// STAFF
+// ============================================================
+function renderStaff() {
+  const q = (document.getElementById('staffSearch')?.value || '').toLowerCase();
+  let list = store.get('staff') || [];
+  if (q) list = list.filter(s => s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q));
+
+  document.getElementById('staffTbody').innerHTML = list.length ?
+    list.map(s => {
+      const statusBadge = s.is_active ? 
+        '<span style="display:inline-flex; align-items:center; gap:4px; color:var(--success); font-size:0.85rem;"><span style="width:8px;height:8px;border-radius:50%;background:var(--success);"></span>Active</span>' : 
+        '<span style="display:inline-flex; align-items:center; gap:4px; color:var(--text-muted); font-size:0.85rem;"><span style="width:8px;height:8px;border-radius:50%;background:var(--text-muted);"></span>Offline</span>';
+      
+      const logoutBtn = s.is_active ? 
+        `<button class="action-btn" style="color:var(--danger)" onclick="forceLogoutStaff(${s.id})" title="Force Logout">${LOGOUT_SVG}</button>` : '';
+
+      return `<tr>
+      <td style="font-weight:500">${s.name}</td>
+      <td>${s.email}</td>
+      <td style="text-transform:capitalize">${s.role}</td>
+      <td>${s.privileges ? s.privileges.join(', ') : 'None'}</td>
+      <td>${statusBadge}</td>
+      <td>
+        ${logoutBtn}
+        <button class="action-btn" style="color:var(--primary)" onclick="generateOTP(${s.id}, '${s.name}')" title="Generate OTP">${OTP_SVG}</button>
+        <button class="action-btn edit" onclick="openStaffModal(${s.id})">${EDIT_SVG}</button>
+        <button class="action-btn del" onclick="deleteStaff(${s.id})">${DEL_SVG}</button>
+      </td>
+    </tr>`;
+    }).join('') :
+    '<tr><td colspan="6" class="empty-cell">No staff found</td></tr>';
+}
+
+async function forceLogoutStaff(id) {
+  if (typeof Swal !== 'undefined') {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: 'Do you really want to force logout this staff member?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Yes, force logout'
+    });
+    if (!result.isConfirmed) return;
+  } else {
+    if (!confirm('Are you sure you want to force logout this staff member?')) return;
+  }
+
+  try {
+    const res = await api(`/api/staff/${id}/force-logout`, 'POST');
+    toast(res.message || 'Staff logged out');
+    syncData();
+  } catch (e) {
+    toast(e.message, 'danger');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const ss = document.getElementById('staffSearch');
+  if (ss) ss.addEventListener('input', renderStaff);
+});
+
+window.activeOTPs = window.activeOTPs || {};
+
+function generateOTP(staffId, staffName) {
+  const otp = Math.floor(1000 + Math.random() * 9000);
+  
+  // Call backend to store OTP
+  api('/api/staff/' + staffId + '/otp', 'POST', { otp: otp }).catch(e => console.error("Failed to save OTP", e));
+  
+  // Remove last one for this staff if it exists
+  if (window.activeOTPs[staffId]) {
+    clearTimeout(window.activeOTPs[staffId].expirationTimer);
+    delete window.activeOTPs[staffId];
+  }
+  
+  // Create new OTP state
+  window.activeOTPs[staffId] = {
+    otp: otp,
+    expiresAt: Date.now() + 300000,
+    expirationTimer: setTimeout(() => {
+      delete window.activeOTPs[staffId];
+      // Nullify OTP in backend
+      api('/api/staff/' + staffId + '/otp', 'POST', { otp: null }).catch(e => {});
+      if (Swal.isVisible() && Swal.getTitle()?.textContent === 'Generated OTP') {
+        Swal.close();
+        toast('OTP has expired', 'warning');
+      }
+    }, 300000)
+  };
+  
+  if (typeof Swal !== 'undefined') {
+    let timerInterval;
+
+    Swal.fire({
+      title: 'Generated OTP',
+      html: `
+        <div style="font-size: 1.1rem; margin-bottom: 15px;">OTP for <strong>${staffName}</strong></div>
+        <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 15px;">
+          <div style="font-size: 2.5rem; font-weight: bold; letter-spacing: 8px; background: var(--surface); padding: 15px; border-radius: 8px;">
+            ${otp}
+          </div>
+          <button class="btn btn-primary" style="height: 40px; width: 40px; padding: 0; display: flex; align-items: center; justify-content: center;" onclick="navigator.clipboard.writeText('${otp}').then(() => toast('OTP copied!', 'success'))" title="Copy OTP">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          </button>
+        </div>
+        <div style="font-size: 0.9rem; color: var(--text-muted);">
+          Expires in <strong id="otpTimer" style="color: var(--danger);">05:00</strong>
+        </div>
+      `,
+      icon: 'success',
+      confirmButtonText: 'Done',
+      didOpen: () => {
+        const timerDisplay = document.getElementById('otpTimer');
+        timerInterval = setInterval(() => {
+          if (!window.activeOTPs[staffId]) {
+             clearInterval(timerInterval);
+             return;
+          }
+          const timeLeftMs = window.activeOTPs[staffId].expiresAt - Date.now();
+          const timeLeft = Math.max(0, Math.ceil(timeLeftMs / 1000));
+          
+          if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            // The setTimeout above handles closing and toasting.
+          } else {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            if (timerDisplay) timerDisplay.textContent = `${m}:${s}`;
+          }
+        }, 1000);
+      },
+      willClose: () => {
+        clearInterval(timerInterval);
+      }
+    });
+  } else {
+    alert(`Generated OTP for ${staffName}:\n\n${otp}`);
+  }
+}
+
+function openStaffModal(id = null) {
+  const form = document.getElementById('staffForm');
+  form.reset();
+  document.getElementById('staffId').value = '';
+  document.getElementById('staffModalTitle').textContent = 'Add Staff';
+  
+  // Uncheck all privileges
+  document.querySelectorAll('.staff-privilege-cb').forEach(cb => cb.checked = false);
+  
+  if (id) {
+    const s = store.get('staff').find(x => x.id == id);
+    if (s) {
+      document.getElementById('staffModalTitle').textContent = 'Edit Staff';
+      document.getElementById('staffId').value = s.id;
+      document.getElementById('staffName').value = s.name;
+      document.getElementById('staffEmail').value = s.email;
+      document.getElementById('staffRole').value = s.role;
+      
+      // Check privileges
+      if (s.privileges && Array.isArray(s.privileges)) {
+          document.querySelectorAll('.staff-privilege-cb').forEach(cb => {
+              if (s.privileges.includes(cb.value)) {
+                  cb.checked = true;
+              }
+          });
+      }
+    }
+  }
+  document.getElementById('staffModal').classList.remove('hidden');
+}
+
+function closeStaffModal() {
+  document.getElementById('staffModal').classList.add('hidden');
+}
+
+async function saveStaff() {
+  const id = document.getElementById('staffId').value;
+  
+  const privileges = [];
+  document.querySelectorAll('.staff-privilege-cb:checked').forEach(cb => {
+      privileges.push(cb.value);
+  });
+  
+  const data = {
+    name: document.getElementById('staffName').value,
+    email: document.getElementById('staffEmail').value,
+    role: document.getElementById('staffRole').value,
+    privileges: privileges
+  };
+
+  try {
+    if (id) {
+      await api('/api/staff/' + id, 'PUT', data);
+      toast('Staff updated successfully', 'success');
+    } else {
+      await api('/api/staff', 'POST', data);
+      toast('Staff added successfully', 'success');
+    }
+    closeStaffModal();
+    syncData();
+  } catch (e) {
+    toast(e.message, 'danger');
+  }
+}
+
+async function deleteStaff(id) {
+  if (!confirm('Are you sure you want to delete this staff member?')) return;
+  try {
+    await api('/api/staff/' + id, 'DELETE');
+    toast('Staff deleted', 'success');
+    syncData();
+  } catch(e) {
+    toast(e.message, 'danger');
+  }
 }

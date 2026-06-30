@@ -43,8 +43,15 @@
                 </svg>
                 Log in with Google
             </a>
+            <a href="{{ route('staff.login') }}" class="btn btn-full" style="padding: 10px 0; font-size: 14px; background: white; border: 1px solid #d1d5db; color: #374151; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                Staff Login (OTP)
+            </a>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; margin-top: 8px;">
                 @if (Route::has('password.request'))
                     <a class="underline text-sm text-gray-600 hover:text-gray-900" href="{{ route('password.request') }}" style="color: var(--primary);">
                         {{ __('Forgot your password?') }}

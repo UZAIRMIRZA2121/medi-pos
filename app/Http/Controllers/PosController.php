@@ -75,6 +75,7 @@ class PosController extends Controller
             
             $sale = Sale::create([
                 'customer_id' => $data['customer_id'],
+                'staff_id' => session('staff_id'),
                 'invoice_number' => $invoice_number,
                 'total_items' => $total_items,
                 'subtotal' => $subtotal,
@@ -120,7 +121,7 @@ class PosController extends Controller
                 'payment' => $data['payment_method'] ?? 'cash',
                 'notes' => $data['notes'] ?? '',
                 'date' => $sale->created_at->toISOString(),
-                'cashier' => 'Admin'
+                'cashier' => session()->has('staff_name') ? session('staff_name') : 'Admin'
             ]);
             
         } catch (\Exception $e) {

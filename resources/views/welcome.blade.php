@@ -10,6 +10,7 @@
   <meta property="og:description" content="The complete POS solution built for modern medical stores and pharmacies." />
   <meta property="og:type" content="website" />
   <title>MediPOS – Medical Store POS System</title>
+  <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 
   <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />

@@ -10,6 +10,11 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\AlertController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StaffAuthController;
+
+// Staff Login
+Route::get('staff/login', [StaffAuthController::class, 'showLoginForm'])->name('staff.login');
+Route::post('staff/login', [StaffAuthController::class, 'login'])->name('staff.login.submit');
 
 
 
@@ -44,35 +49,40 @@ Route::get('/home', function () {
     return redirect()->route('login');
 });
 
+Route::middleware(['auth', 'role:store,cashier', 'subscription.active'])->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard')->middleware('privilege:dashboard');
+    Route::get('/pos', [App\Http\Controllers\PosController::class, 'index'])->name('pos.index')->middleware('privilege:pos');
+    Route::post('/pos/checkout', [App\Http\Controllers\PosController::class, 'checkout'])->name('pos.checkout')->middleware('privilege:pos');
+
+    Route::resource('expenses', App\Http\Controllers\ExpenseController::class)->except(['create', 'show', 'edit'])->middleware('privilege:expenses');
+    Route::get('/sales', [App\Http\Controllers\SaleController::class, 'index'])->name('sales.index')->middleware('privilege:sales_history');
+    Route::get('/invoices', [App\Http\Controllers\SaleController::class, 'invoices'])->name('invoices.index')->middleware('privilege:invoices');
+
+    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit')->middleware('privilege:profile');
+    Route::post('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update')->middleware('privilege:profile');
+});
+
 Route::middleware(['auth', 'role:store', 'subscription.active'])->group(function () {
-    Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/pos', [App\Http\Controllers\PosController::class, 'index'])->name('pos.index');
-    Route::post('/pos/checkout', [App\Http\Controllers\PosController::class, 'checkout'])->name('pos.checkout');
-
-    Route::resource('categories', App\Http\Controllers\CategoryController::class);
-    Route::resource('medicines', App\Http\Controllers\MedicineController::class);
-    Route::resource('suppliers', App\Http\Controllers\SupplierController::class);
-    Route::resource('customers', App\Http\Controllers\CustomerController::class);
-    Route::resource('expenses', App\Http\Controllers\ExpenseController::class)->except(['create', 'show', 'edit']);
-    Route::get('/sales', [App\Http\Controllers\SaleController::class, 'index'])->name('sales.index');
-    Route::get('/invoices', [App\Http\Controllers\SaleController::class, 'invoices'])->name('invoices.index');
-    Route::get('/alerts', [App\Http\Controllers\AlertController::class, 'index'])->name('alerts.index');
-    Route::get('/purchase-orders', [App\Http\Controllers\PurchaseOrderController::class, 'index'])->name('purchase_orders.index');
-    Route::post('/purchase-orders', [App\Http\Controllers\PurchaseOrderController::class, 'store'])->name('purchase_orders.store');
-    Route::get('/purchase-orders/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'show'])->name('purchase_orders.show');
-    Route::put('/purchase-orders/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'update'])->name('purchase_orders.update');
-    Route::delete('/purchase-orders/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'destroy'])->name('purchase_orders.destroy');
-    Route::post('/purchase-orders/{id}/receive', [App\Http\Controllers\PurchaseOrderController::class, 'receive'])->name('purchase_orders.receive');
+    Route::resource('categories', App\Http\Controllers\CategoryController::class)->middleware('privilege:categories');
+    Route::resource('medicines', App\Http\Controllers\MedicineController::class)->middleware('privilege:medicines');
+    Route::resource('suppliers', App\Http\Controllers\SupplierController::class)->middleware('privilege:suppliers');
+    Route::resource('customers', App\Http\Controllers\CustomerController::class)->middleware('privilege:customers');
+    Route::resource('staff', App\Http\Controllers\StaffController::class)->middleware('privilege:staff');
+    
+    Route::get('/alerts', [App\Http\Controllers\AlertController::class, 'index'])->name('alerts.index')->middleware('privilege:alerts');
+    Route::get('/purchase-orders', [App\Http\Controllers\PurchaseOrderController::class, 'index'])->name('purchase_orders.index')->middleware('privilege:purchase_orders');
+    Route::post('/purchase-orders', [App\Http\Controllers\PurchaseOrderController::class, 'store'])->name('purchase_orders.store')->middleware('privilege:purchase_orders');
+    Route::get('/purchase-orders/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'show'])->name('purchase_orders.show')->middleware('privilege:purchase_orders');
+    Route::put('/purchase-orders/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'update'])->name('purchase_orders.update')->middleware('privilege:purchase_orders');
+    Route::delete('/purchase-orders/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'destroy'])->name('purchase_orders.destroy')->middleware('privilege:purchase_orders');
+    Route::post('/purchase-orders/{id}/receive', [App\Http\Controllers\PurchaseOrderController::class, 'receive'])->name('purchase_orders.receive')->middleware('privilege:purchase_orders');
 
 
-    Route::get('/settings/print', [App\Http\Controllers\PrintSettingController::class, 'index'])->name('settings.print');
-    Route::post('/settings/print', [App\Http\Controllers\PrintSettingController::class, 'store'])->name('settings.print.store');
+    Route::get('/settings/print', [App\Http\Controllers\PrintSettingController::class, 'index'])->name('settings.print')->middleware('privilege:settings_store');
+    Route::post('/settings/print', [App\Http\Controllers\PrintSettingController::class, 'store'])->name('settings.print.store')->middleware('privilege:settings_store');
 
-    Route::get('/settings/store', [App\Http\Controllers\StoreSettingController::class, 'index'])->name('settings.store');
-    Route::post('/settings/store', [App\Http\Controllers\StoreSettingController::class, 'store'])->name('settings.store.store');
-
-    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
-    Route::post('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::get('/settings/store', [App\Http\Controllers\StoreSettingController::class, 'index'])->name('settings.store')->middleware('privilege:settings_store');
+    Route::post('/settings/store', [App\Http\Controllers\StoreSettingController::class, 'store'])->name('settings.store.store')->middleware('privilege:settings_store');
 });
 
 Route::middleware(['auth', 'subscription.active'])->group(function () {
@@ -90,7 +100,16 @@ Route::middleware(['auth', 'subscription.active'])->group(function () {
     Route::get('/api/suppliers', [App\Http\Controllers\SupplierController::class, 'apiIndex']);
     Route::get('/api/customers', [App\Http\Controllers\CustomerController::class, 'apiIndex']);
     Route::get('/api/sales', [App\Http\Controllers\SaleController::class, 'apiIndex']);
+    Route::post('/api/sales/{id}/refund', [App\Http\Controllers\SaleController::class, 'refund'])->middleware('privilege:pos');
     Route::get('/api/expenses', [App\Http\Controllers\ExpenseController::class, 'apiIndex']);
+    
+    // Staff Management API Routes
+    Route::get('/api/staff', [App\Http\Controllers\StaffController::class, 'apiIndex']);
+    Route::post('/api/staff', [App\Http\Controllers\StaffController::class, 'store'])->middleware('privilege:staff');
+    Route::put('/api/staff/{id}', [App\Http\Controllers\StaffController::class, 'update'])->middleware('privilege:staff');
+    Route::delete('/api/staff/{id}', [App\Http\Controllers\StaffController::class, 'destroy'])->middleware('privilege:staff');
+    Route::post('/api/staff/{id}/otp', [App\Http\Controllers\StaffController::class, 'saveOtp'])->middleware('privilege:staff');
+    Route::post('/api/staff/{id}/force-logout', [App\Http\Controllers\StaffController::class, 'forceLogout'])->middleware('privilege:staff');
 });
 
 // Admin Routes
@@ -174,3 +193,6 @@ require __DIR__.'/auth.php';
 use App\Http\Controllers\Auth\GoogleLoginController;
 Route::get('auth/google', [GoogleLoginController::class, 'redirectToGoogle'])->name('google.login');
 Route::get('auth/google/callback', [GoogleLoginController::class, 'handleGoogleCallback']);
+
+
+

@@ -45,7 +45,7 @@ class MedicineController extends Controller
             "barcode" => "nullable|string",
             "purchase_price" => "required|numeric",
             "sale_price" => "required|numeric",
-            "stock_quantity" => "required|integer",
+            "stock_quantity" => "nullable|integer",
             "low_stock_level" => "required|integer",
             "expiry_date" => "nullable|date",
             "mfg_date" => "nullable|date",
@@ -57,6 +57,11 @@ class MedicineController extends Controller
             "pack_stock_quantity" => "nullable|integer",
             "items_per_pack" => "nullable|integer",
         ]);
+        
+        // Prevent changing stock manually from edit medicine form
+        unset($data['stock_quantity']);
+        unset($data['pack_stock_quantity']);
+
         $medicine->update($data);
         return response()->json($medicine->load(["category", "supplier"]));
     }

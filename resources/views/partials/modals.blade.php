@@ -214,3 +214,101 @@
     </div>
   </div>
 </div>
+
+<!-- Refund Modal -->
+<div class="modal-overlay hidden" id="refundModal">
+  <div class="modal modal-lg" style="max-width: 800px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Refund Invoice: <span id="refundInvoiceNumber"></span></h3>
+      <button class="btn btn-danger btn-sm" style="padding: 2px 8px; font-weight: bold;" onclick="document.getElementById('refundModal').classList.add('hidden');">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="refundInvoiceId" value="">
+      <div class="table-responsive">
+        <table class="table w-full">
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Price</th>
+              <th>Qty Sold</th>
+              <th>Refund Qty</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="refundItemsTbody">
+            <!-- Items populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+        <div id="refundAmounts" style="font-weight: 500; font-size: 14px;">
+          Paid Amount: <span id="refPaidAmt" style="color:var(--success)">0.00</span> | 
+          Return Amount: <span id="refChangeAmt" style="color:var(--info)">0.00</span>
+          <div style="margin-top: 5px; color: var(--danger); font-weight: bold; font-size: 15px;">
+            Amount to Return (Refund): <span id="refTotalAmountToReturn">PKR 0.00</span>
+          </div>
+        </div>
+        <button class="btn btn-outline-danger" onclick="completeFullRefund()">Complete Invoice Refund</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('refundModal').classList.add('hidden');">Cancel</button>
+      <button class="btn btn-primary" onclick="saveRefundChanges()">Save Partial Refund</button>
+    </div>
+  </div>
+</div>
+
+<!-- Staff Modal -->
+<div class="modal-overlay hidden" id="staffModal">
+  <div class="modal" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="staffModalTitle">Add Staff</h3>
+      <button class="btn btn-danger btn-sm" style="padding: 2px 8px; font-weight: bold;" onclick="closeStaffModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="staffForm">
+        <input type="hidden" id="staffId">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="staffName" class="input w-full" required>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="staffEmail" class="input w-full" required>
+        </div>
+        <div class="form-group">
+          <label>Role</label>
+          <select id="staffRole" class="input w-full" required>
+            <option value="cashier">Cashier</option>
+            <option value="manager">Manager</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Privileges</label>
+          @php
+              $privilegesGroups = \App\Models\Privilege::all()->groupBy('group');
+          @endphp
+          <div id="staffPrivilegesList" style="max-height: 200px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px;">
+              @foreach($privilegesGroups as $group => $privs)
+                  <div style="margin-bottom: 10px;">
+                      <strong style="display: block; font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px;">{{ $group }}</strong>
+                      <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                      @foreach($privs as $priv)
+                          <label style="display: flex; align-items: center; gap: 5px; font-size: 13px;">
+                              <input type="checkbox" class="staff-privilege-cb" value="{{ $priv->slug }}">
+                              {{ $priv->name }}
+                          </label>
+                      @endforeach
+                      </div>
+                  </div>
+              @endforeach
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeStaffModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveStaff()">Save Staff</button>
+    </div>
+  </div>
+</div>
