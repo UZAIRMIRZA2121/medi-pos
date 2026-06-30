@@ -300,7 +300,10 @@ function renderPOS() {
   const cats = store.get('categories');
   const tabs = document.getElementById('posCatTabs');
   tabs.innerHTML = `<button class="cat-tab active" data-cat="" onclick="filterPosCat(this,'')">All</button>` +
-    cats.map(c => `<button class="cat-tab" data-cat="${c.id}" onclick="filterPosCat(this,${c.id})" style="--cat-color:${c.color}">${c.name}</button>`).join('');
+    cats.map(c => {
+      const dot = c.color_tag ? `<span style="display:inline-block; width:10px; height:10px; border-radius:50%; background-color:${c.color_tag}; margin-right:6px;"></span>` : '';
+      return `<button class="cat-tab" data-cat="${c.id}" onclick="filterPosCat(this,${c.id})" style="--cat-color:${c.color_tag || '#ccc'}; display:flex; align-items:center;">${dot}${c.name}</button>`;
+    }).join('');
 
   // Populate category select (dropdown)
   const catSel = document.getElementById('posCatFilter');
@@ -806,7 +809,7 @@ function buildInvoiceHTML(inv) {
     <div class="r-footer">
       <div class="r-thanks">${sFooter}</div>
       <div style="margin-top: 12px; padding-top: 8px; border-top: 1px dotted #999; font-size: 11px; color: #444;">
-        Developed with &hearts; by <strong>Uzair Mirza</strong><br>
+        Developed with &hearts; by <strong>MUtech-Studio</strong><br>
        <span style="font-size: 14px; color: #000;">0308-6452242</span>
       </div>
     </div>
@@ -1153,6 +1156,26 @@ document.addEventListener('DOMContentLoaded', () => {
 // ============================================================
 // MEDICINES
 // ============================================================
+let medStockFilterType = 'all';
+
+function toggleMedStockFilter(type) {
+    medStockFilterType = medStockFilterType === type ? 'all' : type;
+    
+    const btnLow = document.getElementById('btnFilterLowStock');
+    const btnExp = document.getElementById('btnFilterExpiry');
+    
+    if (btnLow) {
+        btnLow.style.background = medStockFilterType === 'lowStock' ? 'var(--warning)' : 'transparent';
+        btnLow.style.color = medStockFilterType === 'lowStock' ? '#fff' : 'var(--warning)';
+    }
+    if (btnExp) {
+        btnExp.style.background = medStockFilterType === 'expiry' ? 'var(--danger)' : 'transparent';
+        btnExp.style.color = medStockFilterType === 'expiry' ? '#fff' : 'var(--danger)';
+    }
+    
+    renderMedicines();
+}
+
 function renderMedicines() {
   const q = (document.getElementById('medSearch')?.value || '').toLowerCase();
   const catF = document.getElementById('medCatFilter')?.value;
@@ -1166,6 +1189,16 @@ function renderMedicines() {
   let meds = store.get('medicines');
   if (q) meds = meds.filter(m => m.name.toLowerCase().includes(q) || (m.generic || '').toLowerCase().includes(q) || (m.barcode || '').includes(q));
   if (catF) meds = meds.filter(m => m.catId == catF);
+  
+  if (medStockFilterType === 'lowStock') {
+      meds = meds.filter(m => isLowStock(m));
+  } else if (medStockFilterType === 'expiry') {
+      meds = meds.filter(m => {
+          const exp = isExpired(m.expiry);
+          const d = daysDiff(m.expiry);
+          return exp || (d !== null && d <= 30);
+      });
+  }
 
   document.getElementById('medTbody').innerHTML = meds.length ?
     meds.map(m => {
@@ -1322,9 +1355,9 @@ function renderCategories() {
     cats.map(c => {
       const count = meds.filter(m => m.catId == c.id).length;
       return `<tr>
-        <td><span class="color-dot" style="background:${c.color}"></span></td>
+        <td><span class="color-dot" style="background:${c.color_tag || '#00b4d8'}"></span></td>
         <td style="font-weight:500">${c.name}</td>
-        <td>${c.desc || '-'}</td>
+        <td>${c.desc || c.description || '-'}</td>
         <td><span class="badge badge-primary">${count}</span></td>
         <td>
           <button class="action-btn edit" onclick="editCategory(${c.id})">${EDIT_SVG}</button>
@@ -1365,8 +1398,8 @@ function editCategory(id) {
   document.getElementById('catFormTitle').textContent = 'Edit Category';
   document.getElementById('catEditId').value = c.id;
   document.getElementById('catName').value = c.name;
-  document.getElementById('catDesc').value = c.desc || '';
-  document.getElementById('catColor').value = c.color || '#00b4d8';
+  document.getElementById('catDesc').value = c.desc || c.description || '';
+  document.getElementById('catColor').value = c.color_tag || '#00b4d8';
 }
 
 function deleteCategory(id) {
@@ -1666,31 +1699,41 @@ function openMedicineOrderModal(medId) {
   document.getElementById('orderSupplierName').textContent = supplier.name;
   document.getElementById('orderSupplierId').value = supplier.id || '';
 
+  const supplierMeds = store.get('medicines').filter(x => x.supplierId == supplierId && x.supplierId != null);
+  const orderMeds = supplierMeds.filter(x => isLowStock(x) || isExpired(x.expiry) || (daysDiff(x.expiry) >= 0 && daysDiff(x.expiry) <= 30));
+  
+  if (!orderMeds.find(x => x.id == medId)) {
+      orderMeds.unshift(m);
+  }
+
   const tbody = document.getElementById('supplierOrderTbody');
   
-  tbody.innerHTML = `
-    <tr>
-      <td style="font-weight:500">
-        ${m.name}
-        <div style="font-size: 0.8em; color: var(--muted)">Remaining Packs: ${Math.floor(m.stock / (m.itemsPerPack || 1))}</div>
-      </td>
-      <td>
-        <input type="hidden" name="med_id[]" value="${m.id}">
-        <input type="hidden" name="med_name[]" value="${m.name}">
-        <input type="number" class="input order-qty" name="med_qty[]" min="1" value="${Math.ceil(Math.max(1, (m.lowStock * 2) - m.stock) / (m.itemsPerPack || 1))}" style="width: 80px; padding: 6px 12px; text-align: center;">
-      </td>
-      <td style="text-align: right;">
-        <button type="button" class="action-btn del" onclick="this.closest('tr').remove()" title="Remove">${DEL_SVG}</button>
-      </td>
-    </tr>
-  `;
+  if (orderMeds.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="empty-cell">No medicines to order</td></tr>';
+  } else {
+    tbody.innerHTML = orderMeds.map(x => `
+      <tr>
+        <td style="font-weight:500">
+          ${x.name}
+          <div style="font-size: 0.8em; color: var(--muted)">Remaining Packs: ${Math.floor(x.stock / (x.itemsPerPack || 1))}</div>
+        </td>
+        <td>
+          <input type="hidden" name="med_id[]" value="${x.id}">
+          <input type="hidden" name="med_name[]" value="${x.name}">
+          <input type="number" class="input order-qty" name="med_qty[]" min="1" value="${Math.ceil(Math.max(1, (x.lowStock * 2) - x.stock) / (x.itemsPerPack || 1))}" style="width: 80px; padding: 6px 12px; text-align: center;">
+        </td>
+        <td style="text-align: right;">
+          <button type="button" class="action-btn del" onclick="this.closest('tr').remove()" title="Remove">${DEL_SVG}</button>
+        </td>
+      </tr>
+    `).join('');
+  }
   
   document.getElementById('supplierOrderModal').classList.remove('hidden');
 }
 
-async function printSupplierOrder() {
+async function saveSupplierOrder() {
   const supplierId = document.getElementById('orderSupplierId').value;
-  const supplier = getSupplier(supplierId) || { name: 'Unknown' };
   const orderNotes = document.getElementById('orderNotes').value;
   const rows = document.querySelectorAll('#supplierOrderTbody tr');
   
@@ -1699,9 +1742,9 @@ async function printSupplierOrder() {
     const qtyInput = tr.querySelector('.order-qty');
     const nameInput = tr.querySelector('input[name="med_name[]"]');
     if (qtyInput && nameInput && parseInt(qtyInput.value) > 0) {
-      const name = tr.querySelector('input[name="med_name[]"]').value;
+      const name = nameInput.value;
       const id = tr.querySelector('input[name="med_id[]"]').value;
-      const qty = tr.querySelector('input[name="med_qty[]"]').value;
+      const qty = qtyInput.value;
       items.push({ id, name, qty });
     }
   });
@@ -1720,8 +1763,32 @@ async function printSupplierOrder() {
       
       if (response.ok && data.success) {
           toast(data.message, 'success');
-          
-          let html = `
+          document.getElementById('supplierOrderModal').classList.add('hidden');
+          setTimeout(() => { window.location.href = '/purchase-orders'; }, 800);
+      } else {
+          toast(data.message || 'Error saving order', 'error');
+      }
+  } catch (err) {
+      console.error(err);
+      toast('Failed to save purchase order', 'error');
+  }
+}
+
+async function printPurchaseOrder(id) {
+    try {
+        const response = await fetch(`/purchase-orders/${id}`);
+        const data = await response.json();
+        
+        if (!response.ok) {
+            toast('Failed to load order', 'error');
+            return;
+        }
+        
+        const supplier = data.supplier || { name: 'Unknown', phone: 'N/A' };
+        const items = data.items || [];
+        const orderNotes = data.notes || '';
+        
+        let html = `
             <!DOCTYPE html>
             <html>
             <head>
@@ -1774,8 +1841,8 @@ async function printSupplierOrder() {
             </head>
             <body>
               <div class="text-center">
-                <h2>${window.printSettings.name}</h2>
-                <div class="address">${window.printSettings.address.replace(/\n/g, '<br>')}</div>
+                <h2>${window.printSettings?.name || 'MediPos'}</h2>
+                <div class="address">${(window.printSettings?.address || '').replace(/\n/g, '<br>')}</div>
                 
                 <div class="divider-solid"></div>
                 <div class="receipt-title">PURCHASE ORDER</div>
@@ -1788,7 +1855,7 @@ async function printSupplierOrder() {
               </div>
               <div class="info-row">
                 <span><strong>DATE:</strong></span>
-                <span>${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-US', {hour12:true, hour:'2-digit', minute:'2-digit'})}</span>
+                <span>${new Date(data.created_at).toLocaleDateString('en-GB')} ${new Date(data.created_at).toLocaleTimeString('en-US', {hour12:true, hour:'2-digit', minute:'2-digit'})}</span>
               </div>
               <div class="info-row">
                 <span><strong>SUPPLIER:</strong></span>
@@ -1811,8 +1878,8 @@ async function printSupplierOrder() {
                   ${items.map((i, index) => `
                     <tr>
                       <td class="text-left">${index + 1}</td>
-                      <td class="text-left">${i.name}</td>
-                      <td class="text-right font-bold">${i.qty}</td>
+                      <td class="text-left">${i.medicine?.name || i.name || 'Unknown'}</td>
+                      <td class="text-right font-bold">${i.quantity}</td>
                     </tr>
                   `).join('')}
                 </tbody>
@@ -1827,7 +1894,7 @@ async function printSupplierOrder() {
                 </div>
                 <div class="totals-row">
                   <span>TOTAL PACKS:</span>
-                  <span>${items.reduce((sum, i) => sum + parseInt(i.qty), 0)}</span>
+                  <span>${items.reduce((sum, i) => sum + parseInt(i.quantity), 0)}</span>
                 </div>
               </div>
               
@@ -1857,19 +1924,15 @@ async function printSupplierOrder() {
               </script>
             </body>
             </html>
-          `;
-          
-          const win = window.open('', '_blank');
-          win.document.write(html);
-          win.document.close();
-          document.getElementById('supplierOrderModal').classList.add('hidden');
-      } else {
-          toast(data.message || 'Error saving order', 'error');
-      }
-  } catch (err) {
-      console.error(err);
-      toast('Failed to save purchase order', 'error');
-  }
+        `;
+        
+        const win = window.open('', '_blank');
+        win.document.write(html);
+        win.document.close();
+    } catch (err) {
+        console.error(err);
+        toast('Failed to load order for printing', 'error');
+    }
 }
 
 function printAlerts() {
@@ -2154,4 +2217,36 @@ async function savePurchaseOrderEdit() {
         console.error(error);
         toast('Failed to update order', 'error');
     }
+}
+
+async function deletePurchaseOrder(id) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: "You are about to delete this purchase order.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch('/purchase-orders/'+id, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    }
+                });
+                const data = await response.json();
+                if(response.ok && data.success) {
+                    Swal.fire('Deleted!', data.message, 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    Swal.fire('Error', data.message || 'Error deleting', 'error');
+                }
+            } catch(e) {
+                Swal.fire('Error', 'Failed to delete', 'error');
+            }
+        }
+    });
 }

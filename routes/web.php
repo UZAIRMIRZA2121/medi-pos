@@ -61,13 +61,18 @@ Route::middleware(['auth', 'role:store', 'subscription.active'])->group(function
     Route::post('/purchase-orders', [App\Http\Controllers\PurchaseOrderController::class, 'store'])->name('purchase_orders.store');
     Route::get('/purchase-orders/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'show'])->name('purchase_orders.show');
     Route::put('/purchase-orders/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'update'])->name('purchase_orders.update');
+    Route::delete('/purchase-orders/{id}', [App\Http\Controllers\PurchaseOrderController::class, 'destroy'])->name('purchase_orders.destroy');
     Route::post('/purchase-orders/{id}/receive', [App\Http\Controllers\PurchaseOrderController::class, 'receive'])->name('purchase_orders.receive');
 
 
     Route::get('/settings/print', [App\Http\Controllers\PrintSettingController::class, 'index'])->name('settings.print');
     Route::post('/settings/print', [App\Http\Controllers\PrintSettingController::class, 'store'])->name('settings.print.store');
 
-    // Profile routes should probably be common
+    Route::get('/settings/store', [App\Http\Controllers\StoreSettingController::class, 'index'])->name('settings.store');
+    Route::post('/settings/store', [App\Http\Controllers\StoreSettingController::class, 'store'])->name('settings.store.store');
+
+    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'edit'])->name('profile.edit');
+    Route::post('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
 });
 
 Route::middleware(['auth', 'subscription.active'])->group(function () {

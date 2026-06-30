@@ -147,4 +147,18 @@ class PurchaseOrderController extends Controller
         
         return response()->json(['success' => true, 'message' => 'Purchase order updated successfully.']);
     }
+    public function destroy($id)
+    {
+        $order = \App\Models\PurchaseOrder::where('user_id', auth()->id())
+            ->findOrFail($id);
+
+        if ($order->status == 'received') {
+            return response()->json(['success' => false, 'message' => 'Cannot delete received orders'], 400);
+        }
+
+        $order->items()->delete();
+        $order->delete();
+
+        return response()->json(['success' => true, 'message' => 'Purchase order deleted successfully']);
+    }
 }

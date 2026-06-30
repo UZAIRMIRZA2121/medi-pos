@@ -17,14 +17,14 @@
         <div class="form-group" style="display: none;"><label>Purchase Price (PKR)</label><input type="number" id="medPurchase" class="input" min="0" step="0.01"/></div>
         <div class="form-group" style="display: none;"><label>Sale Price (PKR) *</label><input type="number" id="medSale" class="input" min="0" step="0.01"/></div>
         <div class="form-group" style="display: none;"><label>Stock Quantity *</label><input type="number" id="medStock" class="input" min="0"/></div>
-        <div class="form-group"><label>Low Stock Level (Packs)</label><input type="number" id="medLowStock" class="input" min="0" value="10"/></div>
         <div class="form-group"><label>Purchase Price Per Pack</label><input type="number" id="medPackPurchase" class="input" min="0" step="0.01"/></div>
         <div class="form-group"><label>Sale Price Per Pack</label><input type="number" id="medPackSale" class="input" min="0" step="0.01"/></div>
         <div class="form-group"><label>Pack Stock Qty</label><input type="number" id="medPackStock" class="input" min="0"/></div>
-        <div class="form-group"><label>Items Per Pack</label><input type="number" id="medItemsPerPack" class="input" min="1" value="1"/></div>
-        <div class="form-group"><label>Expiry Date *</label><input type="date" id="medExpiry" class="input"/></div>
-        <div class="form-group"><label>Manufacturing Date</label><input type="date" id="medMfg" class="input"/></div>
+        <div class="form-group"><label>Low Stock Level (Packs)</label><input type="number" id="medLowStock" class="input" min="0" value="10"/></div>
+        <div class="form-group"><label>Items(Tabs,Caps,ml,...) Per Pack</label><input type="number" id="medItemsPerPack" class="input" min="1" value="1"/></div>
         <div class="form-group"><label>Supplier</label><select id="medSupplier" class="input"><option value="">Select supplier</option></select></div>
+        <div class="form-group"><label>Manufacturing Date</label><input type="date" id="medMfg" class="input"/></div>
+        <div class="form-group"><label>Expiry Date *</label><input type="date" id="medExpiry" class="input"/></div>
         <div class="form-group"><label>Rack / Shelf</label><input type="text" id="medRack" class="input" placeholder="e.g. A-1"/></div>
         <div class="form-group"><label>Prescription Required</label><select id="medRx" class="input"><option value="no">No</option><option value="yes">Yes</option></select></div>
         <div class="form-group form-full"><label>Description</label><textarea id="medDesc" class="input" rows="2" placeholder="Optional..."></textarea></div>
@@ -149,9 +149,9 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="document.getElementById('supplierOrderModal').classList.add('hidden');">Cancel</button>
-      <button class="btn btn-primary" onclick="printSupplierOrder()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2" style="margin-right:8px;vertical-align:text-bottom;"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-        Print Invoice
+      <button class="btn btn-primary" onclick="saveSupplierOrder()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-2" style="margin-right:8px;vertical-align:text-bottom;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+        Place Order
       </button>
     </div>
   </div>
@@ -162,7 +162,7 @@
   <div class="modal" style="max-width: 600px;">
     <div class="modal-header">
       <h3 class="modal-title">Purchase Order Details</h3>
-      <button class="close-btn" onclick="document.getElementById('purchaseOrderDetailsModal').classList.add('hidden');">&times;</button>
+      <button class="btn btn-danger btn-sm" style="padding: 2px 8px; font-weight: bold;" onclick="document.getElementById('purchaseOrderDetailsModal').classList.add('hidden');">&times;</button>
     </div>
     <div class="modal-body">
       <div class="table-responsive">

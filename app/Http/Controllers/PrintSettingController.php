@@ -40,10 +40,11 @@ class PrintSettingController extends Controller
         $setting->name = $data['name'] ?? null;
         $setting->desc = $data['desc'] ?? null;
         $setting->address = $data['address'] ?? null;
-        $setting->heading = $data['heading'] ?? null;
+        $setting->heading = $data['heading'] ?? 'INVOICE';
         $setting->footer = $data['footer'] ?? null;
+        
         $setting->save();
 
-        return back()->with('success', 'Print settings updated successfully!');
+        return redirect()->back()->with(['success' => 'Invoice print settings updated successfully.', 'invoice_success' => true]);
     }
 }

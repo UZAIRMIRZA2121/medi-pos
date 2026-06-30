@@ -11,6 +11,8 @@
           <div class="header-actions">
             <input type="text" class="input input-sm" id="medSearch" placeholder="Search medicines..."/>
             <select class="input input-sm" id="medCatFilter"><option value="">All Categories</option></select>
+            <button class="btn btn-outline-warning btn-sm" id="btnFilterLowStock" onclick="toggleMedStockFilter('lowStock')" style="color:var(--warning);border-color:var(--warning)">Low Stock</button>
+            <button class="btn btn-outline-danger btn-sm" id="btnFilterExpiry" onclick="toggleMedStockFilter('expiry')" style="color:var(--danger);border-color:var(--danger)">Expiry Products</button>
             <button class="btn btn-primary btn-sm" onclick="openMedModal()">+ Add Medicine</button>
           </div>
         </div>

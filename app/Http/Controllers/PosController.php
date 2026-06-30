@@ -9,7 +9,10 @@ use App\Models\Customer;
 
 class PosController extends Controller
 {
-    public function index() { return view('pos.billing'); }
+    public function index() {
+        $settings = \App\Models\BusinessSetting::where('user_id', auth()->id())->first();
+        return view('pos.billing', compact('settings'));
+    }
     
     public function checkout(Request $request) {
         $data = $request->validate([

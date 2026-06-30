@@ -90,11 +90,11 @@
               <div class="sum-row"><span>Subtotal</span><span id="sumSubtotal">PKR 0.00</span></div>
               <div class="sum-row">
                 <span>Discount (%)</span>
-                <input type="number" id="posDiscount" class="input input-sm" value="0" min="0" max="100" style="width:70px"/>
+                <input type="number" id="posDiscount" class="input input-sm" value="{{ $settings->discount ?? 0 }}" min="0" max="100" style="width:70px"/>
               </div>
               <div class="sum-row">
                 <span>Tax (%)</span>
-                <input type="number" id="posTax" class="input input-sm" value="0" min="0" max="100" style="width:70px"/>
+                <input type="number" id="posTax" class="input input-sm" value="{{ $settings->tax ?? 0 }}" min="0" max="100" style="width:70px"/>
               </div>
               <div class="sum-row sum-total"><span>Grand Total</span><span id="sumGrandTotal">PKR 0.00</span></div>
               <div class="sum-row">
@@ -111,7 +111,7 @@
             <button class="btn btn-ghost btn-full" onclick="clearCart()">Clear Cart</button>
             <label style="display:flex; align-items:center; gap:8px; margin-top:12px; font-size:13px; cursor:pointer; color:var(--text-muted)">
               <div class="custom-toggle">
-                <input type="checkbox" id="autoPrint" checked>
+                <input type="checkbox" id="autoPrint" {{ (isset($settings) && $settings->auto_print) ? 'checked' : '' }}>
                 <span class="toggle-slider"></span>
               </div>
               Auto Print Thermal Receipt

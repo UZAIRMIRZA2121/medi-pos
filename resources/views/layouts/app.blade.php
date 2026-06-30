@@ -93,6 +93,7 @@ body.pos-fullscreen .whatsapp-float-btn svg {
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="{{ asset('assets/js/script.js') }}?v={{ filemtime(public_path('assets/js/script.js')) }}"></script>
+    <!-- Core JS -->
+    <script src="{{ asset('assets/js/script.js') }}?v={{ time() }}"></script>
 </body>
 </html>
