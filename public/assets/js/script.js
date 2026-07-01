@@ -862,6 +862,26 @@ function setInvoiceDateRange(type) {
   }
 }
 
+let currentInvoiceFilter = 'all';
+
+function setInvoiceFilter(status) {
+  currentInvoiceFilter = status;
+  
+  // Update button styles
+  const btns = document.querySelectorAll('.invoice-filter-btn');
+  btns.forEach(b => {
+    b.classList.remove('btn-primary');
+    b.classList.add('btn-outline');
+  });
+  const activeBtn = document.getElementById('btnFilter' + status.charAt(0).toUpperCase() + status.slice(1));
+  if (activeBtn) {
+    activeBtn.classList.remove('btn-outline');
+    activeBtn.classList.add('btn-primary');
+  }
+  
+  renderInvoices();
+}
+
 function renderInvoices() {
   const q = (document.getElementById('invoiceSearch')?.value || '').toLowerCase();
   const startStr = document.getElementById('invoiceStartDate')?.value;
@@ -879,7 +899,13 @@ function renderInvoices() {
     if (endD && iDate > endD) matchDate = false;
     
     let matchText = !q || i.id.toLowerCase().includes(q) || i.custName.toLowerCase().includes(q);
-    return matchDate && matchText;
+    
+    let matchFilter = true;
+    if (currentInvoiceFilter === 'paid') matchFilter = parseFloat(i.due) <= 0;
+    else if (currentInvoiceFilter === 'unpaid') matchFilter = parseFloat(i.paid) === 0 && parseFloat(i.due) > 0;
+    else if (currentInvoiceFilter === 'partial') matchFilter = parseFloat(i.paid) > 0 && parseFloat(i.due) > 0;
+
+    return matchDate && matchText && matchFilter;
   }).sort((a, b) => new Date(b.date) - new Date(a.date));
 
   document.getElementById('invoicesTbody').innerHTML = list.length ?
@@ -896,6 +922,7 @@ function renderInvoices() {
       <td>
         <button class="action-btn view" onclick="viewInvoice('${i.id}')" title="View">${VIEW_SVG}</button>
         <button class="action-btn" style="color:var(--warning)" onclick="openRefundModal('${i.id}')" title="Refund">${REFUND_SVG}</button>
+        <button class="action-btn edit" style="color:var(--primary)" onclick="openEditInvoiceModal('${i.id}')" title="Edit">${EDIT_SVG}</button>
         <button class="action-btn del" onclick="deleteInvoice('${i.id}')" title="Delete">${DEL_SVG}</button>
       </td>
     </tr>`).join('') :
@@ -944,10 +971,17 @@ function openRefundModal(invId) {
   
   document.getElementById('refundModal').classList.remove('hidden');
   
-  const paidElem = document.getElementById('refPaidAmt');
-  const returnElem = document.getElementById('refChangeAmt');
-  if (paidElem) paidElem.textContent = fmtCur(inv.paid);
-  if (returnElem) returnElem.textContent = fmtCur(inv.ret);
+  const inputPaidAmt = document.getElementById('refInputPaidAmt');
+  if (inputPaidAmt) {
+    inputPaidAmt.value = inv.paid;
+  }
+  
+  // Store original grand total on modal for calculations
+  document.getElementById('refundModal').dataset.grandTotal = inv.grand;
+  document.getElementById('refundModal').dataset.originalReturn = inv.ret;
+  
+  const alreadyRetElem = document.getElementById('refAlreadyReturned');
+  if (alreadyRetElem) alreadyRetElem.textContent = fmtCur(inv.ret);
   
   calculateRefundTotal();
 }
@@ -962,8 +996,28 @@ function calculateRefundTotal() {
     totalRefund += price * refQty;
   });
   
+  const modal = document.getElementById('refundModal');
+  const originalGrandTotal = parseFloat(modal.dataset.grandTotal) || 0;
+  const newGrandTotal = Math.max(0, originalGrandTotal - totalRefund);
+
   const totalElem = document.getElementById('refTotalAmountToReturn');
-  if (totalElem) totalElem.textContent = fmtCur(totalRefund);
+  if (totalElem) totalElem.textContent = fmtCur(newGrandTotal);
+
+  const inputPaidAmt = document.getElementById('refInputPaidAmt');
+  const returnElem = document.getElementById('refChangeAmt');
+
+  if (inputPaidAmt && returnElem) {
+    const paidAmount = parseFloat(inputPaidAmt.value) || 0;
+    const originalReturnAmount = parseFloat(modal.dataset.originalReturn) || 0;
+    
+    // The amount of cash the customer effectively gave us, after accounting for the initial change we handed back
+    const netPaid = paidAmount - originalReturnAmount;
+    
+    // Any remaining surplus over the new grand total is the NEW return/refund amount
+    const newReturnAmount = Math.max(0, netPaid - newGrandTotal);
+    
+    returnElem.textContent = fmtCur(newReturnAmount);
+  }
 }
 
 async function saveRefundChanges() {
@@ -978,23 +1032,20 @@ async function saveRefundChanges() {
     const refQty = parseInt(tr.querySelector('.refund-qty').value) || 0;
     if (refQty > 0) {
       refunds.push({ medicine_id: medId, refund_qty: refQty });
-      hasRefund = true;
     }
   });
   
-  if (!hasRefund) {
-    toast('Please enter quantity to refund for at least one item.', 'warning');
-    return;
-  }
+  const inputPaidAmt = document.getElementById('refInputPaidAmt');
+  const newPaidAmount = inputPaidAmt ? parseFloat(inputPaidAmt.value) || 0 : 0;
   
   Swal.fire({
-    title: 'Process Refund?',
-    text: 'Are you sure you want to process this partial refund?',
+    title: 'Save Invoice Changes?',
+    text: 'Are you sure you want to update this invoice?',
     icon: 'warning',
     showCancelButton: true,
     confirmButtonColor: '#3085d6',
     cancelButtonColor: '#d33',
-    confirmButtonText: 'Yes, process it!'
+    confirmButtonText: 'Yes, save it!'
   }).then(async (result) => {
     if (result.isConfirmed) {
       try {
@@ -1004,7 +1055,7 @@ async function saveRefundChanges() {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
           },
-          body: JSON.stringify({ type: 'partial', items: refunds })
+          body: JSON.stringify({ type: 'partial', items: refunds, paid_amount: newPaidAmount })
         });
         
         const data = await response.json();
@@ -2420,6 +2471,85 @@ async function deletePurchaseOrder(id) {
             }
         }
     });
+}
+
+function openEditInvoiceModal(invId) {
+  const inv = store.get('invoices').find(i => i.id === invId);
+  if (!inv) return;
+  
+  document.getElementById('editInvoiceNumber').textContent = inv.id;
+  document.getElementById('editInvoiceId').value = inv.id;
+  
+  document.getElementById('editInvSubtotal').value = inv.subtotal || 0;
+  document.getElementById('editInvDiscount').value = inv.discount || 0; // percentage
+  document.getElementById('editInvTax').value = inv.tax || 0; // percentage
+  document.getElementById('editInvPaidAmt').value = inv.paid || 0;
+  
+  calculateEditInvoiceTotal();
+  document.getElementById('editInvoiceModal').classList.remove('hidden');
+}
+
+function calculateEditInvoiceTotal() {
+  const subtotal = parseFloat(document.getElementById('editInvSubtotal').value) || 0;
+  const discountPercent = parseFloat(document.getElementById('editInvDiscount').value) || 0;
+  const taxPercent = parseFloat(document.getElementById('editInvTax').value) || 0;
+  const paidAmt = parseFloat(document.getElementById('editInvPaidAmt').value) || 0;
+  
+  const discAmt = subtotal * (discountPercent / 100);
+  const taxableAmt = subtotal - discAmt;
+  const taxAmt = taxableAmt * (taxPercent / 100);
+  const grandTotal = taxableAmt + taxAmt;
+  
+  document.getElementById('editInvGrandTotal').value = grandTotal.toFixed(2);
+  
+  let dueAmt = 0;
+  let returnAmt = 0;
+  if (paidAmt >= grandTotal) {
+    returnAmt = paidAmt - grandTotal;
+  } else {
+    dueAmt = grandTotal - paidAmt;
+  }
+  
+  document.getElementById('editInvDueAmt').textContent = fmtCur(dueAmt);
+  document.getElementById('editInvReturnAmt').textContent = fmtCur(returnAmt);
+}
+
+async function saveEditInvoiceChanges() {
+  const invId = document.getElementById('editInvoiceId').value;
+  const discount = parseFloat(document.getElementById('editInvDiscount').value) || 0;
+  const tax = parseFloat(document.getElementById('editInvTax').value) || 0;
+  const paid = parseFloat(document.getElementById('editInvPaidAmt').value) || 0;
+  
+  const payload = {
+    discount_percent: discount,
+    tax_percent: tax,
+    paid_amount: paid
+  };
+  
+  try {
+    const response = await fetch('/api/sales/' + invId + '/edit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+      },
+      body: JSON.stringify(payload)
+    });
+    
+    const data = await response.json();
+    if (response.ok && data.success) {
+      toast(data.message, 'success');
+      document.getElementById('editInvoiceModal').classList.add('hidden');
+      api('/api/sales').then(res => {
+        store.set('invoices', res);
+        renderInvoices();
+      });
+    } else {
+      toast(data.message || 'Edit failed', 'error');
+    }
+  } catch(e) {
+    toast('Error saving invoice changes', 'error');
+  }
 }
 
 // ============================================================

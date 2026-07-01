@@ -8,12 +8,20 @@
       <div class="card">
         <div class="card-header">
           <h3>Invoice History</h3>
-          <div class="header-actions" style="display: flex; gap: 5px; flex-wrap: wrap;">
-            <input type="date" class="input input-sm" id="invoiceStartDate" onchange="renderInvoices()" title="Start Date" />
-            <input type="date" class="input input-sm" id="invoiceEndDate" onchange="renderInvoices()" title="End Date" />
-            <button class="btn btn-sm btn-outline" onclick="setInvoiceDateRange('thisMonth')">This Month</button>
-            <button class="btn btn-sm btn-outline" onclick="setInvoiceDateRange('lastMonth')">Last Month</button>
-            <input type="text" class="input input-sm" id="invoiceSearch" oninput="renderInvoices()" placeholder="Search invoice or customer..."/>
+          <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+            <div class="header-actions" style="display: flex; gap: 5px; flex-wrap: wrap;">
+              <input type="date" class="input input-sm" id="invoiceStartDate" onchange="renderInvoices()" title="Start Date" />
+              <input type="date" class="input input-sm" id="invoiceEndDate" onchange="renderInvoices()" title="End Date" />
+              <button class="btn btn-sm btn-outline" onclick="setInvoiceDateRange('thisMonth')">This Month</button>
+              <button class="btn btn-sm btn-outline" onclick="setInvoiceDateRange('lastMonth')">Last Month</button>
+              <input type="text" class="input input-sm" id="invoiceSearch" oninput="renderInvoices()" placeholder="Search invoice or customer..."/>
+            </div>
+            <div class="filter-buttons" style="display: flex; gap: 5px; flex-wrap: wrap;">
+              <button class="btn btn-sm btn-primary invoice-filter-btn" id="btnFilterAll" onclick="setInvoiceFilter('all')">All</button>
+              <button class="btn btn-sm btn-outline invoice-filter-btn" id="btnFilterPaid" onclick="setInvoiceFilter('paid')">Paid</button>
+              <button class="btn btn-sm btn-outline invoice-filter-btn" id="btnFilterUnpaid" onclick="setInvoiceFilter('unpaid')">Unpaid</button>
+              <button class="btn btn-sm btn-outline invoice-filter-btn" id="btnFilterPartial" onclick="setInvoiceFilter('partial')">Partial Paid</button>
+            </div>
           </div>
         </div>
         <div class="table-wrap">

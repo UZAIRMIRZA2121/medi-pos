@@ -80,58 +80,95 @@ class SaleController extends Controller
                 return response()->json(['success' => false, 'message' => 'No items to refund.']);
             }
 
-            $refundSubtotal = 0;
-            $refundTotalQty = 0;
-
-            $refundSale = new Sale();
-            $refundSale->invoice_number = 'REF-' . $sale->invoice_number . '-' . time();
-            $refundSale->customer_id = $sale->customer_id;
-            $refundSale->payment_method = 'refund';
-            $refundSale->discount_percent = $sale->discount_percent;
-            $refundSale->tax_percent = $sale->tax_percent;
-            $refundSale->user_id = auth()->id() ?? $sale->user_id;
-            $refundSale->staff_id = session('staff_id');
-            // Store temporarily to get ID
-            $refundSale->total_items = 0;
-            $refundSale->subtotal = 0;
-            $refundSale->grand_total = 0;
-            $refundSale->save();
+            $newPaidAmt = $request->input('paid_amount');
+            if (!is_null($newPaidAmt) && $newPaidAmt !== '') {
+                $sale->paid_amount = $newPaidAmt;
+            }
 
             foreach ($itemsToRefund as $refData) {
                 $med = \App\Models\Medicine::find($refData['medicine_id']);
                 if ($med) {
                     $med->increment('stock_quantity', $refData['refund_qty']);
                 }
-                
-                $itemSubtotal = $refData['refund_qty'] * $refData['unit_price'];
-                $refundSubtotal += $itemSubtotal;
-                $refundTotalQty += $refData['refund_qty'];
 
-                $refundSale->items()->create([
-                    'medicine_id' => $refData['medicine_id'],
-                    'quantity' => -$refData['refund_qty'],
-                    'unit_price' => $refData['unit_price'],
-                    'subtotal' => -$itemSubtotal
-                ]);
+                $originalItem = $sale->items()->where('medicine_id', $refData['medicine_id'])->first();
+                if ($originalItem) {
+                    $originalItem->quantity -= $refData['refund_qty'];
+                    $originalItem->subtotal = $originalItem->quantity * $originalItem->unit_price;
+                    $originalItem->save();
+
+                    if ($originalItem->quantity <= 0) {
+                        $originalItem->delete();
+                    }
+                }
             }
 
-            $discAmt = $refundSubtotal * ($sale->discount_percent / 100);
-            $taxAmt = ($refundSubtotal - $discAmt) * ($sale->tax_percent / 100);
-            $refundGrandTotal = $refundSubtotal - $discAmt + $taxAmt;
+            // Recalculate sale totals
+            $newSubtotal = $sale->items()->sum('subtotal');
+            $newTotalQty = $sale->items()->sum('quantity');
 
-            $refundSale->total_items = -$refundTotalQty;
-            $refundSale->subtotal = -$refundSubtotal;
-            $refundSale->grand_total = -$refundGrandTotal;
-            $refundSale->paid_amount = 0;
-            $refundSale->due_amount = 0;
-            $refundSale->return_amount = $refundGrandTotal;
-            $refundSale->save();
+            $discAmt = $newSubtotal * ($sale->discount_percent / 100);
+            $taxAmt = ($newSubtotal - $discAmt) * ($sale->tax_percent / 100);
+            $newGrandTotal = $newSubtotal - $discAmt + $taxAmt;
+
+            $sale->total_items = $newTotalQty;
+            $sale->subtotal = $newSubtotal;
+            $sale->grand_total = $newGrandTotal;
+
+            if ($sale->paid_amount >= $newGrandTotal) {
+                $sale->return_amount = $sale->paid_amount - $newGrandTotal;
+                $sale->due_amount = 0;
+            } else {
+                $sale->due_amount = $newGrandTotal - $sale->paid_amount;
+                $sale->return_amount = 0;
+            }
+
+            if ($newTotalQty <= 0) {
+                $sale->delete();
+                $msg = 'Refund processed successfully. Invoice was fully refunded and deleted.';
+            } else {
+                $sale->save();
+                $msg = 'Refund processed successfully. Invoice updated.';
+            }
                 
-                \DB::commit();
-            return response()->json(['success' => true, 'message' => 'Refund processed successfully. New Refund Invoice created.']);
+            \DB::commit();
+            return response()->json(['success' => true, 'message' => $msg]);
         } catch (\Exception $e) {
             \DB::rollBack();
             return response()->json(['success' => false, 'message' => 'Error processing refund: ' . $e->getMessage()]);
         }
+    }
+    public function editInvoice(Request $request, $id) {
+        $sale = Sale::where('invoice_number', $id)->firstOrFail();
+
+        $request->validate([
+            'discount_percent' => 'numeric|min:0|max:100',
+            'tax_percent' => 'numeric|min:0|max:100',
+            'paid_amount' => 'numeric|min:0'
+        ]);
+
+        $sale->discount_percent = $request->input('discount_percent', $sale->discount_percent);
+        $sale->tax_percent = $request->input('tax_percent', $sale->tax_percent);
+        $sale->paid_amount = $request->input('paid_amount', $sale->paid_amount);
+
+        // Recalculate totals
+        $subtotal = $sale->subtotal;
+        $discAmt = $subtotal * ($sale->discount_percent / 100);
+        $taxAmt = ($subtotal - $discAmt) * ($sale->tax_percent / 100);
+        $grandTotal = $subtotal - $discAmt + $taxAmt;
+
+        $sale->grand_total = $grandTotal;
+
+        if ($sale->paid_amount >= $grandTotal) {
+            $sale->return_amount = $sale->paid_amount - $grandTotal;
+            $sale->due_amount = 0;
+        } else {
+            $sale->due_amount = $grandTotal - $sale->paid_amount;
+            $sale->return_amount = 0;
+        }
+
+        $sale->save();
+
+        return response()->json(['success' => true, 'message' => 'Invoice updated successfully.']);
     }
 }

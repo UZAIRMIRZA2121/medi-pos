@@ -240,20 +240,79 @@
           </tbody>
         </table>
       </div>
-      <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-        <div id="refundAmounts" style="font-weight: 500; font-size: 14px;">
-          Paid Amount: <span id="refPaidAmt" style="color:var(--success)">0.00</span> | 
-          Return Amount: <span id="refChangeAmt" style="color:var(--info)">0.00</span>
+      <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: flex-start;">
+        <div id="refundAmounts" style="font-weight: 500; font-size: 14px; display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <label style="margin: 0; min-width: 100px;">Paid Amount:</label>
+            <input type="number" id="refInputPaidAmt" class="input input-sm" style="width: 120px;" min="0" step="0.01" oninput="calculateRefundTotal()">
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-muted);">
+            <label style="margin: 0; min-width: 100px;">Already Returned:</label>
+            <span id="refAlreadyReturned">PKR 0.00</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <label style="margin: 0; min-width: 100px; color: var(--info);">Refund Amt (Now):</label>
+            <span id="refChangeAmt" style="color:var(--info); font-weight: bold; font-size: 16px;">0.00</span>
+          </div>
           <div style="margin-top: 5px; color: var(--danger); font-weight: bold; font-size: 15px;">
-            Amount to Return (Refund): <span id="refTotalAmountToReturn">PKR 0.00</span>
+            Invoice New Total: <span id="refTotalAmountToReturn">PKR 0.00</span>
           </div>
         </div>
-        <button class="btn btn-outline-danger" onclick="completeFullRefund()">Complete Invoice Refund</button>
       </div>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-danger" style="margin-right: auto;" onclick="completeFullRefund()">Complete Invoice Refund</button>
       <button class="btn btn-ghost" onclick="document.getElementById('refundModal').classList.add('hidden');">Cancel</button>
-      <button class="btn btn-primary" onclick="saveRefundChanges()">Save Partial Refund</button>
+      <button class="btn btn-primary" onclick="saveRefundChanges()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Invoice Modal -->
+<div class="modal-overlay hidden" id="editInvoiceModal">
+  <div class="modal" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Edit Invoice: <span id="editInvoiceNumber"></span></h3>
+      <button class="btn btn-danger btn-sm" style="padding: 2px 8px; font-weight: bold;" onclick="document.getElementById('editInvoiceModal').classList.add('hidden');">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editInvoiceId" value="">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Subtotal (PKR)</label>
+          <input type="number" id="editInvSubtotal" class="input" style="background:#f0f0f0;" readonly>
+        </div>
+        <div class="form-group">
+          <label>Discount (%)</label>
+          <input type="number" id="editInvDiscount" class="input" min="0" max="100" step="0.01" oninput="calculateEditInvoiceTotal()">
+        </div>
+        <div class="form-group">
+          <label>Tax (%)</label>
+          <input type="number" id="editInvTax" class="input" min="0" max="100" step="0.01" oninput="calculateEditInvoiceTotal()">
+        </div>
+        <div class="form-group">
+          <label>Grand Total (PKR)</label>
+          <input type="number" id="editInvGrandTotal" class="input" style="background:#f0f0f0;" readonly>
+        </div>
+        <div class="form-group">
+          <label>Paid Amount (PKR)</label>
+          <input type="number" id="editInvPaidAmt" class="input" min="0" step="0.01" oninput="calculateEditInvoiceTotal()">
+        </div>
+      </div>
+      <div style="margin-top: 15px; font-weight: 500; font-size: 14px; display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; justify-content: space-between;">
+          <span>Due Amount:</span>
+          <span id="editInvDueAmt" style="color:var(--danger); font-weight: bold;">0.00</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span>Return Amount:</span>
+          <span id="editInvReturnAmt" style="color:var(--info); font-weight: bold;">0.00</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('editInvoiceModal').classList.add('hidden');">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditInvoiceChanges()">Save Changes</button>
     </div>
   </div>
 </div>
