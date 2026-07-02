@@ -230,16 +230,36 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // optionally show a toast notification here
-                console.log(data.message);
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: data.message,
+                    showConfirmButton: false,
+                    timer: 3000
+                });
             } else {
-                alert(data.message || 'Error updating subscription');
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'error',
+                    title: data.message || 'Error updating subscription',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
                 checkbox.checked = !checkbox.checked; // Revert
             }
         })
         .catch(err => {
             console.error(err);
-            alert('An error occurred.');
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: 'An error occurred.',
+                showConfirmButton: false,
+                timer: 3000
+            });
             checkbox.checked = !checkbox.checked; // Revert
         });
     }
@@ -256,15 +276,36 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                console.log(data.message);
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: data.message,
+                    showConfirmButton: false,
+                    timer: 3000
+                });
             } else {
-                alert(data.message || 'Error updating sync access');
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'error',
+                    title: data.message || 'Error updating sync access',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
                 checkbox.checked = !checkbox.checked; // Revert
             }
         })
         .catch(err => {
             console.error(err);
-            alert('An error occurred.');
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: 'An error occurred.',
+                showConfirmButton: false,
+                timer: 3000
+            });
             checkbox.checked = !checkbox.checked; // Revert
         });
     }
