@@ -21,7 +21,6 @@ class SyncController extends Controller
         if (!$user || !$user->sync_access) {
             return response()->json(['status' => 'error', 'message' => 'Unauthorized: Sync Access Revoked by Super Admin.'], 403);
         }
-        
         DB::beginTransaction();
         try {
             foreach ($payload as $table => $records) {
