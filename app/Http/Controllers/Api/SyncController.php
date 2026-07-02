@@ -17,10 +17,20 @@ class SyncController extends Controller
         $userId = $request->input('user_id');
         $payload = $request->input('payload', []);
 
-        $user = DB::table('users')->where('id', $userId)->first();
-        if (!$user || !$user->sync_access) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthorized: Sync Access Revoked by Super Admin.'], 403);
+        $apiUrl = env('CLOUD_API_URL', 'https://medipos.msons-shop.com/api');
+        
+        try {
+            $response = \Illuminate\Support\Facades\Http::post($apiUrl . '/sync/check-access', [
+                'user_id' => $userId
+            ]);
+            
+            if (!$response->successful() || $response->json('sync_access') == 0) {
+                return response()->json(['status' => 'error', 'message' => 'Unauthorized: Sync Access Revoked by Super Admin.'], 403);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Failed to connect to Live Server to verify sync access.'], 500);
         }
+        
         DB::beginTransaction();
         try {
             foreach ($payload as $table => $records) {
@@ -50,6 +60,30 @@ class SyncController extends Controller
     }
 
     /**
+     * Check if user has sync access
+     */
+    public function checkAccess(Request $request)
+    {
+        $request->validate(['user_id' => 'required']);
+        $userId = $request->input('user_id');
+
+        $user = DB::table('users')->where('id', $userId)->first();
+        if (!$user || !$user->sync_access) {
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'Unauthorized: Sync Access Revoked by Super Admin.',
+                'sync_access' => 0
+            ], 403);
+        }
+
+        return response()->json([
+            'status' => 'success', 
+            'message' => 'User has sync access',
+            'sync_access' => 1
+        ]);
+    }
+
+    /**
      * Send cloud changes down to the local database
      */
     public function pull(Request $request)
@@ -58,9 +92,18 @@ class SyncController extends Controller
         $userId = $request->input('user_id');
         $lastSync = $request->input('last_sync', '1970-01-01 00:00:00');
 
-        $user = DB::table('users')->where('id', $userId)->first();
-        if (!$user || !$user->sync_access) {
-            return response()->json(['status' => 'error', 'message' => 'Unauthorized: Sync Access Revoked by Super Admin.'], 403);
+        $apiUrl = env('CLOUD_API_URL', 'https://medipos.msons-shop.com/api');
+        
+        try {
+            $response = \Illuminate\Support\Facades\Http::post($apiUrl . '/sync/check-access', [
+                'user_id' => $userId
+            ]);
+            
+            if (!$response->successful() || $response->json('sync_access') == 0) {
+                return response()->json(['status' => 'error', 'message' => 'Unauthorized: Sync Access Revoked by Super Admin.'], 403);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['status' => 'error', 'message' => 'Failed to connect to Live Server to verify sync access.'], 500);
         }
         
         $tables = ['categories', 'suppliers', 'customers', 'medicines', 'sales', 'expenses', 'purchase_orders', 'staff', 'business_settings', 'print_settings'];
