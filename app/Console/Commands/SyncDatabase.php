@@ -36,12 +36,22 @@ class SyncDatabase extends Command
         }
 
         $apiUrl = config('app.cloud_api_url', 'http://127.0.0.1:8000/api');
+        
+        // Find the store owner's user_id (the main user locally)
+        // If staff is running this, the staff record belongs to user_id. We can just pick the first user.
+        $owner = \App\Models\User::whereNull('parent_id')->first() ?? \App\Models\User::first();
+        if (!$owner) {
+            $this->error("No local user found. Cannot sync.");
+            return;
+        }
+        $userId = $owner->id;
+
         $tables = ['categories', 'suppliers', 'customers', 'medicines', 'sales', 'sale_items', 'expenses', 'purchase_orders', 'purchase_order_items'];
 
         // ==========================================
         // 1. PUSH LOCAL CHANGES TO CLOUD
         // ==========================================
-        $this->info("Pushing local changes...");
+        $this->info("Pushing local changes for user_id {$userId}...");
         $payload = [];
 
         foreach ($tables as $table) {
@@ -58,7 +68,10 @@ class SyncDatabase extends Command
 
         if (!empty($payload)) {
             try {
-                $response = Http::post($apiUrl . '/sync/push', ['payload' => $payload]);
+                $response = Http::post($apiUrl . '/sync/push', [
+                    'payload' => $payload,
+                    'user_id' => $userId
+                ]);
                 
                 if ($response->successful()) {
                     $this->info("Push successful. Updating local sync timestamps...");
@@ -91,7 +104,10 @@ class SyncDatabase extends Command
         }
 
         try {
-            $response = Http::get($apiUrl . '/sync/pull', ['last_sync' => $latestSync]);
+            $response = Http::get($apiUrl . '/sync/pull', [
+                'last_sync' => $latestSync,
+                'user_id' => $userId
+            ]);
             
             if ($response->successful()) {
                 $data = $response->json();

@@ -13,14 +13,19 @@ class SyncController extends Controller
      */
     public function push(Request $request)
     {
-        // Simple authentication can be added here
-        
+        $request->validate(['user_id' => 'required']);
+        $userId = $request->input('user_id');
         $payload = $request->input('payload', []);
         
         DB::beginTransaction();
         try {
             foreach ($payload as $table => $records) {
                 foreach ($records as $record) {
+                    // Security: Enforce user_id if this table has it in the payload, or just force it for tenant tables
+                    if (in_array($table, ['categories', 'medicines', 'suppliers', 'customers', 'sales', 'expenses', 'purchase_orders'])) {
+                        $record['user_id'] = $userId;
+                    }
+
                     $exists = DB::table($table)->where('id', $record['id'])->exists();
                     
                     if ($exists) {
@@ -43,19 +48,43 @@ class SyncController extends Controller
      */
     public function pull(Request $request)
     {
+        $request->validate(['user_id' => 'required']);
+        $userId = $request->input('user_id');
         $lastSync = $request->input('last_sync', '1970-01-01 00:00:00');
         
-        $tables = ['categories', 'suppliers', 'customers', 'medicines', 'sales', 'sale_items', 'expenses', 'purchase_orders', 'purchase_order_items'];
+        $tables = ['categories', 'suppliers', 'customers', 'medicines', 'sales', 'expenses', 'purchase_orders'];
         $changes = [];
 
         foreach ($tables as $table) {
             $records = DB::table($table)
+                ->where('user_id', $userId)
                 ->where('updated_at', '>', $lastSync)
                 ->get();
                 
             if ($records->isNotEmpty()) {
                 $changes[$table] = $records;
             }
+        }
+
+        // Handle items which depend on parent tables
+        $saleItems = DB::table('sale_items')
+            ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
+            ->where('sales.user_id', $userId)
+            ->where('sale_items.updated_at', '>', $lastSync)
+            ->select('sale_items.*')
+            ->get();
+        if ($saleItems->isNotEmpty()) {
+            $changes['sale_items'] = $saleItems;
+        }
+
+        $poItems = DB::table('purchase_order_items')
+            ->join('purchase_orders', 'purchase_order_items.purchase_order_id', '=', 'purchase_orders.id')
+            ->where('purchase_orders.user_id', $userId)
+            ->where('purchase_order_items.updated_at', '>', $lastSync)
+            ->select('purchase_order_items.*')
+            ->get();
+        if ($poItems->isNotEmpty()) {
+            $changes['purchase_order_items'] = $poItems;
         }
 
         return response()->json([
@@ -78,15 +107,52 @@ class SyncController extends Controller
         $user = \App\Models\User::where('email', $request->email)->first();
 
         if ($user && \Illuminate\Support\Facades\Hash::check($request->password, $user->password)) {
+            $userData = $user->toArray();
+            $userData['password'] = $user->password; // Explicitly include hashed password
+
             return response()->json([
                 'status' => 'success',
-                'user' => $user->toArray()
+                'user' => $userData
             ]);
         }
 
         return response()->json([
             'status' => 'error',
             'message' => 'Invalid credentials on live server.'
+        ], 401);
+    }
+
+    /**
+     * Verify staff credentials against the cloud database for new local logins
+     */
+    public function verifyStaff(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'otp' => 'required'
+        ]);
+
+        $staff = \App\Models\Staff::where('email', $request->email)
+            ->where('otp', $request->otp)
+            ->first();
+
+        if ($staff) {
+            $user = \App\Models\User::find($staff->user_id);
+            if ($user) {
+                $userData = $user->toArray();
+                $userData['password'] = $user->password;
+
+                return response()->json([
+                    'status' => 'success',
+                    'staff' => $staff->toArray(),
+                    'user' => $userData
+                ]);
+            }
+        }
+
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Invalid staff credentials on live server.'
         ], 401);
     }
 }

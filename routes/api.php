@@ -10,3 +10,4 @@ Route::get('/user', function (Request $request) {
 Route::post('/sync/push', [\App\Http\Controllers\Api\SyncController::class, 'push']);
 Route::get('/sync/pull', [\App\Http\Controllers\Api\SyncController::class, 'pull']);
 Route::post('/sync/verify-login', [\App\Http\Controllers\Api\SyncController::class, 'verifyLogin']);
+Route::post('/sync/verify-staff', [\App\Http\Controllers\Api\SyncController::class, 'verifyStaff']);

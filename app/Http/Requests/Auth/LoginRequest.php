@@ -48,6 +48,7 @@ class LoginRequest extends FormRequest
             $cloudVerified = false;
             try {
                 $apiUrl = config('app.cloud_api_url', 'http://127.0.0.1:8000/api');
+             
                 $response = \Illuminate\Support\Facades\Http::post($apiUrl . '/sync/verify-login', [
                     'email' => $this->email,
                     'password' => $this->password,
@@ -55,22 +56,31 @@ class LoginRequest extends FormRequest
 
                 if ($response->successful() && $response->json('status') === 'success') {
                     $userData = $response->json('user');
+                    \Illuminate\Support\Facades\Log::info('Cloud user data received: ', $userData);
                     
-                    // User exists on cloud! Create them locally.
-                    $user = \App\Models\User::create([
-                        'name' => $userData['name'],
-                        'email' => $userData['email'],
-                        'password' => $userData['password'], // already hashed
-                    ]);
+                    // User exists on cloud! Update or create them locally.
+                    $user = \App\Models\User::updateOrCreate(
+                        ['email' => $userData['email']],
+                        [
+                            'id' => $userData['id'],
+                            'type' => $userData['type'] ?? 'owner',
+                            'name' => $userData['name'],
+                            // If password is not provided, use a random placeholder until next sync, but they just provided the raw password, so we can hash it if missing
+                            'password' => $userData['password'] ?? \Illuminate\Support\Facades\Hash::make($this->password), 
+                        ]
+                    );
 
                     // Force an immediate initial sync pull to download their data
                     \Illuminate\Support\Facades\Artisan::call('sync:run');
 
                     Auth::login($user, $this->boolean('remember'));
                     $cloudVerified = true;
+                } else {
+                    \Illuminate\Support\Facades\Log::error('Cloud login failed response: ' . $response->body());
                 }
             } catch (\Exception $e) {
                 // Ignore API connection failures and just fallback to standard error
+                \Illuminate\Support\Facades\Log::error('Cloud login exception: ' . $e->getMessage());
             }
 
             if (!$cloudVerified) {

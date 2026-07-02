@@ -28,6 +28,50 @@ class StaffAuthController extends Controller
                       ->whereNotNull('otp')
                       ->first();
 
+        if (!$staff) {
+            try {
+                $apiUrl = config('app.cloud_api_url', 'http://127.0.0.1:8000/api');
+                $response = \Illuminate\Support\Facades\Http::post($apiUrl . '/sync/verify-staff', [
+                    'email' => $request->email,
+                    'otp' => $request->otp,
+                ]);
+
+                if ($response->successful() && $response->json('status') === 'success') {
+                    $staffData = $response->json('staff');
+                    $userData = $response->json('user');
+
+                    // 1. Create or update the Store Owner locally
+                    \App\Models\User::updateOrCreate(
+                        ['email' => $userData['email']],
+                        [
+                            'id' => $userData['id'],
+                            'type' => $userData['type'] ?? 'owner',
+                            'name' => $userData['name'],
+                            'password' => $userData['password'], 
+                        ]
+                    );
+
+                    // 2. Create or update the Staff member locally
+                    $staff = Staff::updateOrCreate(
+                        ['email' => $staffData['email']],
+                        [
+                            'id' => $staffData['id'],
+                            'user_id' => $userData['id'],
+                            'name' => $staffData['name'],
+                            'role' => $staffData['role'] ?? 'staff',
+                            'privileges' => $staffData['privileges'] ?? [],
+                            'otp' => $staffData['otp'], // Valid OTP
+                        ]
+                    );
+
+                    // 3. Force initial sync
+                    \Illuminate\Support\Facades\Artisan::call('sync:run');
+                }
+            } catch (\Exception $e) {
+                \Log::error('Cloud staff verification exception: ' . $e->getMessage());
+            }
+        }
+
         if ($staff) {
             \Log::info('Staff found, logging in user ID: ' . $staff->user_id);
             
@@ -70,7 +114,7 @@ class StaffAuthController extends Controller
                 'profile' => 'profile.edit',
             ];
 
-            $privileges = $staff->privileges ?? [];
+            $privileges = is_array($staff->privileges) ? $staff->privileges : json_decode($staff->privileges, true) ?? [];
             $redirectRoute = 'dashboard'; // fallback
 
             foreach ($privileges as $p) {
