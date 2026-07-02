@@ -38,22 +38,31 @@ class SyncDatabase extends Command
 
         $apiUrl = config('app.cloud_api_url', 'http://127.0.0.1:8000/api');
         
-        // Find the store owner's user_id (the main user locally)
-        // If staff is running this, the staff record belongs to user_id. We can just pick the first user.
-        $owner = \App\Models\User::whereNull('parent_id')->first() ?? \App\Models\User::first();
-        if (!$owner) {
-            $this->error("No local user found. Cannot sync.");
-            return;
+        $owners = \App\Models\User::whereNull('parent_id')->get();
+        if ($owners->isEmpty()) {
+            // Fallback just in case
+            $first = \App\Models\User::first();
+            if ($first) {
+                $owners = collect([$first]);
+            } else {
+                $this->error("No local user found. Cannot sync.");
+                return;
+            }
         }
-        $userId = $owner->id;
 
         $tables = ['categories', 'suppliers', 'customers', 'medicines', 'sales', 'sale_items', 'expenses', 'purchase_orders', 'purchase_order_items', 'staff', 'business_settings', 'print_settings'];
 
-        // ==========================================
-        // 1. PUSH LOCAL CHANGES TO CLOUD
-        // ==========================================
-        $this->info("Pushing local changes for user_id {$userId}...");
-        $payload = [];
+        foreach ($owners as $owner) {
+            $userId = $owner->id;
+            $this->info("==========================================");
+            $this->info("SYNCING FOR USER ID: {$userId} ({$owner->email})");
+            $this->info("==========================================");
+
+            // ==========================================
+            // 1. PUSH LOCAL CHANGES TO CLOUD
+            // ==========================================
+            $this->info("Pushing local changes for user_id {$userId}...");
+            $payload = [];
 
         foreach ($tables as $table) {
             // Find records that have never been synced OR have been updated since they were last synced
@@ -147,8 +156,9 @@ class SyncDatabase extends Command
         } catch (\Exception $e) {
             $this->error("Failed to connect to Cloud API for pulling: " . $e->getMessage());
         }
+        } // End of foreach ($owners as $owner)
 
-        $this->info("Sync completed.");
+        $this->info("Sync completed for all users.");
     }
 
     /**

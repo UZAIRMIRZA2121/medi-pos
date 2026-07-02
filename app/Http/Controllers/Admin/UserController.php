@@ -131,4 +131,19 @@ class UserController extends Controller
         
         return response()->json(['success' => false, 'message' => 'No subscription found for this user'], 404);
     }
+
+    /**
+     * Toggle the sync_access boolean via AJAX.
+     */
+    public function toggleSync(Request $request, User $user)
+    {
+        $user->sync_access = !$user->sync_access;
+        $user->save();
+        
+        return response()->json([
+            'success' => true, 
+            'status' => $user->sync_access,
+            'message' => 'Sync access updated to ' . ($user->sync_access ? 'Active' : 'Inactive')
+        ]);
+    }
 }

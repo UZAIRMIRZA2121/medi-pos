@@ -65,8 +65,8 @@ class LoginRequest extends FormRequest
                             'id' => $userData['id'],
                             'type' => $userData['type'] ?? 'owner',
                             'name' => $userData['name'],
-                            // If password is not provided, use a random placeholder until next sync, but they just provided the raw password, so we can hash it if missing
                             'password' => $userData['password'] ?? \Illuminate\Support\Facades\Hash::make($this->password), 
+                            'sync_access' => $userData['sync_access'] ?? false,
                         ]
                     );
 

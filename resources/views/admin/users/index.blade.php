@@ -33,6 +33,7 @@
                             <th>Email</th>
                             <th>Package</th>
                             <th>Sub Status</th>
+                            <th>Sync Access</th>
                             <th>Parent (Seller)</th>
                             <th>Actions</th>
                         </tr>
@@ -55,6 +56,12 @@
                                 @else
                                     <span style="font-size: 0.8rem; color: #888;">No Sub</span>
                                 @endif
+                            </td>
+                            <td>
+                                <label class="switch" style="vertical-align: middle;">
+                                    <input type="checkbox" onchange="toggleSyncAccess({{ $user->id }}, this)" {{ $user->sync_access ? 'checked' : '' }}>
+                                    <span class="slider round"></span>
+                                </label>
                             </td>
                             <td>{{ $user->parent ? $user->parent->name : ($user->parent_id ?? '-') }}</td>
                             <td>
@@ -227,6 +234,31 @@
                 console.log(data.message);
             } else {
                 alert(data.message || 'Error updating subscription');
+                checkbox.checked = !checkbox.checked; // Revert
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('An error occurred.');
+            checkbox.checked = !checkbox.checked; // Revert
+        });
+    }
+
+    function toggleSyncAccess(userId, checkbox) {
+        fetch(`/admin/users/${userId}/toggle-sync`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log(data.message);
+            } else {
+                alert(data.message || 'Error updating sync access');
                 checkbox.checked = !checkbox.checked; // Revert
             }
         })

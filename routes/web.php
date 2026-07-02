@@ -141,6 +141,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::put('/users/{user}', [App\Http\Controllers\Admin\UserController::class, 'update'])->name('users.update');
     Route::resource('packages', App\Http\Controllers\Admin\PackageController::class);
     Route::post('/users/{user}/toggle-subscription', [App\Http\Controllers\Admin\UserController::class, 'toggleSubscription'])->name('users.toggle-subscription');
+    Route::post('/users/{user}/toggle-sync', [App\Http\Controllers\Admin\UserController::class, 'toggleSync'])->name('users.toggle-sync');
 
     Route::get('/payments', [App\Http\Controllers\Admin\PaymentRequestController::class, 'index'])->name('payments.index');
     Route::post('/payments/{paymentRequest}/approve', [App\Http\Controllers\Admin\PaymentRequestController::class, 'approve'])->name('payments.approve');

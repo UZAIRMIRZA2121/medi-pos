@@ -16,6 +16,11 @@ class SyncController extends Controller
         $request->validate(['user_id' => 'required']);
         $userId = $request->input('user_id');
         $payload = $request->input('payload', []);
+
+        $user = DB::table('users')->where('id', $userId)->first();
+        if (!$user || !$user->sync_access) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized: Sync Access Revoked by Super Admin.'], 403);
+        }
         
         DB::beginTransaction();
         try {
@@ -53,6 +58,11 @@ class SyncController extends Controller
         $request->validate(['user_id' => 'required']);
         $userId = $request->input('user_id');
         $lastSync = $request->input('last_sync', '1970-01-01 00:00:00');
+
+        $user = DB::table('users')->where('id', $userId)->first();
+        if (!$user || !$user->sync_access) {
+            return response()->json(['status' => 'error', 'message' => 'Unauthorized: Sync Access Revoked by Super Admin.'], 403);
+        }
         
         $tables = ['categories', 'suppliers', 'customers', 'medicines', 'sales', 'expenses', 'purchase_orders', 'staff', 'business_settings', 'print_settings'];
         $changes = [];

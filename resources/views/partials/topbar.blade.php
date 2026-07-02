@@ -17,7 +17,7 @@
       <button onclick="document.getElementById('shortcutsModal').classList.remove('hidden')" title="Keyboard Shortcuts" class="btn btn-ghost" style="margin-right: 15px; display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; font-weight: 600; text-decoration: none; border: 1px solid #ef4444; color: #ef4444; border-radius: var(--radius-sm); transition: all 0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='#fff';" onmouseout="this.style.background='transparent'; this.style.color='#ef4444';">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="14" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/><line x1="8" y1="16" x2="16" y2="16"/></svg>
       </button>
-      @if(config('app.env') === 'local' && !session()->has('staff_id'))
+      @if(config('app.env') === 'local' && !session()->has('staff_id') && Auth::user()->sync_access)
       <form method="POST" action="{{ route('manual.sync') }}" style="display: inline;">
         @csrf
         <button type="submit" class="btn btn-primary" style="margin-right: 15px; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; font-weight: 600; text-decoration: none; background: #4f46e5; border-color: #4f46e5;">
