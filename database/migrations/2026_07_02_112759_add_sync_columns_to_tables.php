@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        $tables = ['categories', 'suppliers', 'customers', 'medicines', 'sales', 'sale_items', 'expenses', 'purchase_orders', 'purchase_order_items'];
+        $tables = ['categories', 'suppliers', 'customers', 'medicines', 'sales', 'sale_items', 'expenses', 'purchase_orders', 'purchase_order_items', 'staff', 'business_settings', 'print_settings'];
 
         foreach ($tables as $table) {
             if (Schema::hasTable($table) && !Schema::hasColumn($table, 'last_synced_at')) {
@@ -27,7 +27,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        $tables = ['categories', 'suppliers', 'customers', 'medicines', 'sales', 'sale_items', 'expenses', 'purchase_orders', 'purchase_order_items'];
+        $tables = ['categories', 'suppliers', 'customers', 'medicines', 'sales', 'sale_items', 'expenses', 'purchase_orders', 'purchase_order_items', 'staff', 'business_settings', 'print_settings'];
 
         foreach ($tables as $table) {
             if (Schema::hasTable($table) && Schema::hasColumn($table, 'last_synced_at')) {

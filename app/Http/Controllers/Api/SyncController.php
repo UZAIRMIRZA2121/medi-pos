@@ -21,9 +21,11 @@ class SyncController extends Controller
         try {
             foreach ($payload as $table => $records) {
                 foreach ($records as $record) {
-                    // Security: Enforce user_id if this table has it in the payload, or just force it for tenant tables
-                    if (in_array($table, ['categories', 'medicines', 'suppliers', 'customers', 'sales', 'expenses', 'purchase_orders', 'staff', 'business_settings', 'print_settings'])) {
+                    // Security: Enforce correct tenant ID
+                    if (in_array($table, ['categories', 'medicines', 'suppliers', 'customers', 'sales', 'purchase_orders', 'staff', 'business_settings', 'print_settings'])) {
                         $record['user_id'] = $userId;
+                    } elseif ($table === 'expenses') {
+                        $record['store_id'] = $userId;
                     }
 
                     $exists = DB::table($table)->where('id', $record['id'])->exists();
@@ -56,10 +58,18 @@ class SyncController extends Controller
         $changes = [];
 
         foreach ($tables as $table) {
-            $records = DB::table($table)
-                ->where('user_id', $userId)
-                ->where('updated_at', '>', $lastSync)
-                ->get();
+            $query = DB::table($table)->where(function($q) use ($lastSync) {
+                $q->whereNull('last_synced_at')
+                  ->orWhere('updated_at', '>', $lastSync);
+            });
+
+            if ($table === 'expenses') {
+                $query->where('store_id', $userId);
+            } else {
+                $query->where('user_id', $userId);
+            }
+
+            $records = $query->get();
                 
             if ($records->isNotEmpty()) {
                 $changes[$table] = $records;
@@ -70,7 +80,10 @@ class SyncController extends Controller
         $saleItems = DB::table('sale_items')
             ->join('sales', 'sale_items.sale_id', '=', 'sales.id')
             ->where('sales.user_id', $userId)
-            ->where('sale_items.updated_at', '>', $lastSync)
+            ->where(function($q) use ($lastSync) {
+                $q->whereNull('sale_items.last_synced_at')
+                  ->orWhere('sale_items.updated_at', '>', $lastSync);
+            })
             ->select('sale_items.*')
             ->get();
         if ($saleItems->isNotEmpty()) {
@@ -80,7 +93,10 @@ class SyncController extends Controller
         $poItems = DB::table('purchase_order_items')
             ->join('purchase_orders', 'purchase_order_items.purchase_order_id', '=', 'purchase_orders.id')
             ->where('purchase_orders.user_id', $userId)
-            ->where('purchase_order_items.updated_at', '>', $lastSync)
+            ->where(function($q) use ($lastSync) {
+                $q->whereNull('purchase_order_items.last_synced_at')
+                  ->orWhere('purchase_order_items.updated_at', '>', $lastSync);
+            })
             ->select('purchase_order_items.*')
             ->get();
         if ($poItems->isNotEmpty()) {

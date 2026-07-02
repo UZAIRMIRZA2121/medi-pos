@@ -27,6 +27,7 @@ class SyncDatabase extends Command
      */
     public function handle()
     {
+     
         $this->info("Starting sync process...");
 
         // Determine if there is internet

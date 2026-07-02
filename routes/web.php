@@ -94,6 +94,12 @@ Route::middleware(['auth', 'subscription.active'])->group(function () {
     Route::patch('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [App\Http\Controllers\ProfileController::class, 'destroy'])->name('profile.destroy');
     
+    // Manual Sync for Local POS
+    Route::post('/manual-sync', function () {
+        \Illuminate\Support\Facades\Artisan::call('sync:run');
+        return back()->with('success', 'Manual Sync Completed Successfully!');
+    })->name('manual.sync');
+
     // API endpoints for AJAX fetch
     Route::get('/api/categories', [App\Http\Controllers\CategoryController::class, 'apiIndex']);
     Route::get('/api/medicines', [App\Http\Controllers\MedicineController::class, 'apiIndex']);
