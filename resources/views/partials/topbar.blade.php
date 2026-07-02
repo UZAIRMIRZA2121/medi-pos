@@ -18,13 +18,52 @@
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><line x1="6" y1="8" x2="6" y2="8"/><line x1="10" y1="8" x2="10" y2="8"/><line x1="14" y1="8" x2="14" y2="8"/><line x1="18" y1="8" x2="18" y2="8"/><line x1="6" y1="12" x2="6" y2="12"/><line x1="10" y1="12" x2="10" y2="12"/><line x1="14" y1="12" x2="14" y2="12"/><line x1="18" y1="12" x2="18" y2="12"/><line x1="8" y1="16" x2="16" y2="16"/></svg>
       </button>
       @if(config('app.env') === 'local' && !session()->has('staff_id') && Auth::user()->sync_access)
-      <form method="POST" action="{{ route('manual.sync') }}" style="display: inline;">
+      <form method="POST" action="{{ route('manual.sync') }}" style="display: inline;" onsubmit="return handleSyncSubmit(event, this);">
         @csrf
         <button type="submit" class="btn btn-primary" style="margin-right: 15px; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; font-weight: 600; text-decoration: none; background: #4f46e5; border-color: #4f46e5;">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
             Sync
         </button>
       </form>
+      <script>
+        function handleSyncSubmit(e, form) {
+            e.preventDefault();
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Syncing Data...',
+                    html: 'Please wait while we synchronize your data with the cloud.<br><br><span style="color:#64748b;font-size:0.9rem;">Do not close this window.</span>',
+                    allowOutsideClick: false,
+                    allowEscapeKey: false,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                        const container = document.querySelector('.swal2-container');
+                        if (container) {
+                            container.style.backdropFilter = 'blur(5px)';
+                            container.style.webkitBackdropFilter = 'blur(5px)';
+                            container.style.backgroundColor = 'rgba(0,0,0,0.5)';
+                        }
+                    }
+                });
+            }
+            form.submit();
+        }
+
+        // Show toast notification for sync result
+        document.addEventListener('DOMContentLoaded', function() {
+            @if(session('success'))
+                if (typeof toast !== 'undefined') {
+                    toast("{{ session('success') }}", "success");
+                }
+            @endif
+
+            @if(session('error'))
+                if (typeof toast !== 'undefined') {
+                    toast("{{ session('error') }}", "danger");
+                }
+            @endif
+        });
+      </script>
       @endif
       @if(Auth::check() && Auth::user()->type === 'store' && !request()->routeIs('pos.index'))
       <a href="{{ route('pos.index') }}" class="btn btn-primary" style="margin-right: 15px; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; font-weight: 600; text-decoration: none;">

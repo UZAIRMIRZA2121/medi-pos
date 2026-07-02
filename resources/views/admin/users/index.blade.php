@@ -230,36 +230,15 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: data.message,
-                    showConfirmButton: false,
-                    timer: 3000
-                });
+                if (typeof toast !== 'undefined') toast(data.message, 'success');
             } else {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'error',
-                    title: data.message || 'Error updating subscription',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
+                if (typeof toast !== 'undefined') toast(data.message || 'Error updating subscription', 'danger');
                 checkbox.checked = !checkbox.checked; // Revert
             }
         })
         .catch(err => {
             console.error(err);
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'error',
-                title: 'An error occurred.',
-                showConfirmButton: false,
-                timer: 3000
-            });
+            if (typeof toast !== 'undefined') toast('An error occurred.', 'danger');
             checkbox.checked = !checkbox.checked; // Revert
         });
     }
@@ -276,36 +255,16 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'success',
-                    title: data.message,
-                    showConfirmButton: false,
-                    timer: 3000
-                });
+                let toastType = data.status ? 'success' : 'danger';
+                if (typeof toast !== 'undefined') toast(data.message, toastType);
             } else {
-                Swal.fire({
-                    toast: true,
-                    position: 'top-end',
-                    icon: 'error',
-                    title: data.message || 'Error updating sync access',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
+                if (typeof toast !== 'undefined') toast(data.message || 'Error updating sync access', 'danger');
                 checkbox.checked = !checkbox.checked; // Revert
             }
         })
         .catch(err => {
             console.error(err);
-            Swal.fire({
-                toast: true,
-                position: 'top-end',
-                icon: 'error',
-                title: 'An error occurred.',
-                showConfirmButton: false,
-                timer: 3000
-            });
+            if (typeof toast !== 'undefined') toast('An error occurred.', 'danger');
             checkbox.checked = !checkbox.checked; // Revert
         });
     }
