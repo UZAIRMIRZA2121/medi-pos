@@ -43,11 +43,43 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+            
+            // Try Cloud Verification Fallback
+            $cloudVerified = false;
+            try {
+                $apiUrl = config('app.cloud_api_url', 'http://127.0.0.1:8000/api');
+                $response = \Illuminate\Support\Facades\Http::post($apiUrl . '/sync/verify-login', [
+                    'email' => $this->email,
+                    'password' => $this->password,
+                ]);
 
-            throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
-            ]);
+                if ($response->successful() && $response->json('status') === 'success') {
+                    $userData = $response->json('user');
+                    
+                    // User exists on cloud! Create them locally.
+                    $user = \App\Models\User::create([
+                        'name' => $userData['name'],
+                        'email' => $userData['email'],
+                        'password' => $userData['password'], // already hashed
+                    ]);
+
+                    // Force an immediate initial sync pull to download their data
+                    \Illuminate\Support\Facades\Artisan::call('sync:run');
+
+                    Auth::login($user, $this->boolean('remember'));
+                    $cloudVerified = true;
+                }
+            } catch (\Exception $e) {
+                // Ignore API connection failures and just fallback to standard error
+            }
+
+            if (!$cloudVerified) {
+                RateLimiter::hit($this->throttleKey());
+
+                throw ValidationException::withMessages([
+                    'email' => trans('auth.failed'),
+                ]);
+            }
         }
 
         RateLimiter::clear($this->throttleKey());

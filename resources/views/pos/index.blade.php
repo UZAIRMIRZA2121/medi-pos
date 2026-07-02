@@ -145,33 +145,35 @@
             <div class="pos-cat-tabs" id="posCatTabs"></div>
           </div>
 
-          <!-- Medicine Grid -->
-          <div class="card">
-            <div class="pos-med-header">
-              <span id="posMedCount" class="pos-med-count">All medicines</span>
-              <div class="pos-view-toggle">
-                <button class="view-btn active" id="viewGrid" onclick="setPosView('grid')" title="Grid view">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                </button>
-                <button class="view-btn" id="viewList" onclick="setPosView('list')" title="List view">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                </button>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+            <!-- Medicine Grid -->
+            <div class="card" style="display: flex; flex-direction: column; height: 100%;">
+              <div class="pos-med-header">
+                <span id="posMedCount" class="pos-med-count">All medicines</span>
+                <div class="pos-view-toggle">
+                  <button class="view-btn active" id="viewGrid" onclick="setPosView('grid')" title="Grid view">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+                  </button>
+                  <button class="view-btn" id="viewList" onclick="setPosView('list')" title="List view">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                  </button>
+                </div>
               </div>
+              <div id="posMedGrid" class="pos-med-grid" style="flex: 1; overflow-y: auto; max-height: 400px;"></div>
             </div>
-            <div id="posMedGrid" class="pos-med-grid"></div>
-          </div>
 
-          <!-- Cart -->
-          <div class="card">
-            <div class="card-header">
-              <h3>Cart Items</h3>
-              <span id="cartBadge" class="badge badge-primary">0 items</span>
-            </div>
-            <div class="table-wrap">
-              <table class="table" id="cartTable">
-                <thead><tr><th>Medicine</th><th>Price</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead>
-                <tbody id="cartTbody"><tr><td colspan="5" class="empty-cell">Cart is empty — click any medicine above to add</td></tr></tbody>
-              </table>
+            <!-- Cart -->
+            <div class="card" style="display: flex; flex-direction: column; height: 100%;">
+              <div class="card-header">
+                <h3>Cart Items</h3>
+                <span id="cartBadge" class="badge badge-primary">0 items</span>
+              </div>
+              <div class="table-wrap" style="flex: 1; overflow-y: auto; max-height: 400px;">
+                <table class="table" id="cartTable">
+                  <thead><tr><th>Medicine</th><th>Price</th><th>Qty</th><th>Subtotal</th><th></th></tr></thead>
+                  <tbody id="cartTbody"><tr><td colspan="5" class="empty-cell">Cart is empty — click any medicine above to add</td></tr></tbody>
+                </table>
+              </div>
             </div>
           </div>
 

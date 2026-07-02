@@ -1099,6 +1099,16 @@
       .dashboard-wrapper { margin-top: 3rem; }
       .db-floating-card.fc-1 { top: -10px; right: -10px; }
       .db-floating-card.fc-2 { display: none; }
+      .navbar-collapse {
+        background: rgba(10, 15, 30, 0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        padding: 1rem;
+        border-radius: var(--radius-md);
+        margin-top: 10px;
+        border: 1px solid var(--glass-border);
+        box-shadow: var(--shadow-glass);
+      }
     }
 
     @media (max-width: 767.98px) {

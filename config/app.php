@@ -15,6 +15,8 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
+    'cloud_api_url' => env('CLOUD_API_URL', 'http://127.0.0.1:8000/api'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Environment

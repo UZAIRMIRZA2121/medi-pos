@@ -3,7 +3,7 @@
   <div class="modal modal-lg">
     <div class="modal-header">
       <h3 id="medModalTitle">Add Medicine</h3>
-      <button class="modal-close" onclick="closeMedModal()">×</button>
+      <button class="modal-close" onclick="closeMedModal()">Ã—</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="medId"/>
@@ -42,7 +42,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3 id="suppModalTitle">Add Supplier</h3>
-      <button class="modal-close" onclick="closeSuppModal()">×</button>
+      <button class="modal-close" onclick="closeSuppModal()">Ã—</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="suppId"/>
@@ -67,7 +67,7 @@
   <div class="modal">
     <div class="modal-header">
       <h3 id="custModalTitle">Add Customer</h3>
-      <button class="modal-close" onclick="closeCustModal()">×</button>
+      <button class="modal-close" onclick="closeCustModal()">Ã—</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="custId"/>
@@ -92,7 +92,7 @@
   <div class="modal modal-lg">
     <div class="modal-header">
       <h3>Invoice Preview</h3>
-      <button class="modal-close" onclick="closeInvoiceModal()">×</button>
+      <button class="modal-close" onclick="closeInvoiceModal()">Ã—</button>
     </div>
     <div class="modal-body" id="invoicePreview" style="background:#f0f0f0;padding:24px"></div>
     <div class="modal-footer">
@@ -107,7 +107,7 @@
   <div class="modal modal-sm">
     <div class="modal-header">
       <h3>Confirm Delete</h3>
-      <button class="modal-close" onclick="closeConfirmModal()">×</button>
+      <button class="modal-close" onclick="closeConfirmModal()">Ã—</button>
     </div>
     <div class="modal-body">
       <p id="confirmMsg">Are you sure you want to delete this item? This action cannot be undone.</p>
@@ -124,7 +124,7 @@
   <div class="modal modal-lg">
     <div class="modal-header">
       <h3>Purchase Order: <span id="orderSupplierName"></span></h3>
-      <button class="modal-close" onclick="document.getElementById('supplierOrderModal').classList.add('hidden');">×</button>
+      <button class="modal-close" onclick="document.getElementById('supplierOrderModal').classList.add('hidden');">Ã—</button>
     </div>
     <div class="modal-body">
       <input type="hidden" id="orderSupplierId"/>
@@ -368,6 +368,86 @@
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeStaffModal()">Cancel</button>
       <button class="btn btn-primary" onclick="saveStaff()">Save Staff</button>
+    </div>
+  </div>
+</div>
+
+<!-- Shortcuts Modal -->
+<div class="modal-overlay hidden" id="shortcutsModal">
+  <div class="modal modal-lg" style="max-width: 800px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Keyboard Shortcuts</h3>
+      <button class="btn btn-danger btn-sm" style="padding: 2px 8px; font-weight: bold;" onclick="document.getElementById('shortcutsModal').classList.add('hidden');">&times;</button>
+    </div>
+    <div class="modal-body" style="padding: 20px;">
+      <p style="margin-bottom: 20px; color: var(--muted);">Use these keyboard shortcuts to navigate the POS screen efficiently without using your mouse.</p>
+      <div class="table-responsive">
+        <table class="table w-full" style="text-align: left;">
+          <thead>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <th style="padding: 12px 10px; width: 250px;">Shortcut Key</th>
+              <th style="padding: 12px 10px;">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 10px;"><strong>Any Letter / Number</strong></td>
+              <td style="padding: 12px 10px; color: var(--text-muted);">Automatically focus the Medicine Search Bar and start typing.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 10px;"><strong>Arrow Keys</strong></td>
+              <td style="padding: 12px 10px; color: var(--text-muted);">Navigate up, down, left, and right through the Medicine grid.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 10px;"><strong>Enter</strong> <small>(on Medicine)</small></td>
+              <td style="padding: 12px 10px; color: var(--text-muted);">Add the currently highlighted medicine to the cart. Press multiple times to increase quantity.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 10px;"><strong>Backspace</strong> <small>(on Medicine)</small></td>
+              <td style="padding: 12px 10px; color: var(--text-muted);">Decrease the cart quantity of the highlighted medicine by 1.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 10px;"><strong>Delete</strong> <small>(on Medicine)</small></td>
+              <td style="padding: 12px 10px; color: var(--text-muted);">Instantly remove the highlighted medicine from the cart completely.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 10px;"><strong>Esc</strong></td>
+              <td style="padding: 12px 10px; color: var(--text-muted);">Clear the search bar and reset the medicine grid.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 10px;"><strong>Ctrl</strong></td>
+              <td style="padding: 12px 10px; color: var(--text-muted);">Cycle focus through Discount, Tax, and Paid Amount fields in the Bill Summary.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 10px;"><strong>Shift</strong></td>
+              <td style="padding: 12px 10px; color: var(--text-muted);">Instantly jump focus back to the Medicine Search Bar.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 10px;"><strong>Enter</strong> <small>(in Bill Summary)</small></td>
+              <td style="padding: 12px 10px; color: var(--text-muted);">Generate Invoice (trigger checkout) when focused on Discount, Tax, or Paid Amount.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 10px;"><strong>F8</strong></td>
+              <td style="padding: 12px 10px; color: var(--text-muted);">Generate Invoice from anywhere on the POS page.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 10px;"><strong>Shift + Delete</strong> / <strong>F9</strong></td>
+              <td style="padding: 12px 10px; color: var(--text-muted);">Clear the entire cart instantly.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--border);">
+              <td style="padding: 12px 10px;"><strong>Enter</strong> <small>(in Invoice Preview)</small></td>
+              <td style="padding: 12px 10px; color: var(--text-muted);">Print Invoice when the Invoice Preview modal is open.</td>
+            </tr>
+            <tr>
+              <td style="padding: 12px 10px;"><strong>Esc</strong> <small>(in Invoice Preview)</small></td>
+              <td style="padding: 12px 10px; color: var(--text-muted);">Close the Invoice Preview modal.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="document.getElementById('shortcutsModal').classList.add('hidden');">Close</button>
     </div>
   </div>
 </div>

@@ -349,6 +349,17 @@ function clearPosSearch() {
 }
 
 function renderMedGrid() {
+  let focusedMedId = null;
+  if (document.activeElement && (document.activeElement.classList.contains('med-card') || document.activeElement.classList.contains('med-row'))) {
+    const onclickAttr = document.activeElement.getAttribute('onclick');
+    if (onclickAttr) {
+      const match = onclickAttr.match(/addToCart\((\d+)\)/);
+      if (match) {
+        focusedMedId = match[1];
+      }
+    }
+  }
+
   let meds = store.get('medicines');
   const q = posFilter.q.toLowerCase();
   if (q) meds = meds.filter(m =>
@@ -379,6 +390,11 @@ function renderMedGrid() {
   } else {
     grid.innerHTML = meds.map(m => buildMedCard(m)).join('');
   }
+
+  if (focusedMedId) {
+    const newEl = document.querySelector(`.med-card[onclick="addToCart(${focusedMedId})"], .med-row[onclick="addToCart(${focusedMedId})"]`);
+    if (newEl) newEl.focus();
+  }
 }
 
 function buildMedCard(m) {
@@ -393,7 +409,7 @@ function buildMedCard(m) {
   if (oos) { stockBg = '#fee2e2'; stockColor = '#991b1b'; }
   else if (low) { stockBg = '#fef3c7'; stockColor = '#92400e'; }
 
-  return `<div class="med-card${oos ? ' out-of-stock' : ''}${inCart ? ' in-cart' : ''}" onclick="addToCart(${m.id})">
+  return `<div class="med-card${oos ? ' out-of-stock' : ''}${inCart ? ' in-cart' : ''}" onclick="addToCart(${m.id})" tabindex="0">
     ${inCart ? `<div class="med-card-incart">${cartQty}</div>` : ''}
     ${exp ? '<span class="med-card-badge" style="background:#fee2e2;color:#991b1b">Expired</span>' :
       low && !oos ? '<span class="med-card-badge" style="background:#fef3c7;color:#92400e">Low</span>' : ''}
@@ -414,7 +430,7 @@ function buildMedRow(m) {
   const cat = getCategory(m.catId);
   const inCart = cart.find(c => c.medId == m.id);
 
-  return `<div class="med-row${oos ? ' out-of-stock' : ''}${inCart ? ' in-cart' : ''}" onclick="addToCart(${m.id})">
+  return `<div class="med-row${oos ? ' out-of-stock' : ''}${inCart ? ' in-cart' : ''}" onclick="addToCart(${m.id})" tabindex="0">
     <div class="med-row-info">
       <div class="med-row-name">${m.name} ${inCart ? `<span class="badge badge-success" style="font-size:10px">In cart ×${inCart.qty}</span>` : ''}
         ${exp ? '<span class="badge badge-danger" style="font-size:10px">Expired</span>' : ''}
@@ -461,6 +477,173 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', renderCartSummary);
   });
+
+  // Global Modal Navigation
+  document.addEventListener('keydown', function(e) {
+    const invoiceModal = document.getElementById('invoiceModal');
+    if (invoiceModal && !invoiceModal.classList.contains('hidden')) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        printInvoice();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeInvoiceModal();
+      }
+      return;
+    }
+  });
+
+  // POS Keyboard Navigation
+  document.addEventListener('keydown', function(e) {
+    const searchEl = document.getElementById('posSearch');
+    if (!searchEl) return; // Only active if search element exists (meaning we are on POS page)
+    
+    const invoiceModal = document.getElementById('invoiceModal');
+    if (invoiceModal && !invoiceModal.classList.contains('hidden')) return; // Block if modal open
+
+    const isSearchFocused = document.activeElement === searchEl;
+
+    // Control: Cycle focus through Discount, Tax, Paid Amount
+    if (e.key === 'Control') {
+      e.preventDefault();
+      const fields = [
+        document.getElementById('posDiscount'),
+        document.getElementById('posTax'),
+        document.getElementById('posPaid')
+      ].filter(Boolean);
+
+      if (fields.length > 0) {
+        const currentIndex = fields.indexOf(document.activeElement);
+        if (currentIndex === -1 || currentIndex === fields.length - 1) {
+          fields[0].focus();
+          fields[0].select();
+        } else {
+          fields[currentIndex + 1].focus();
+          fields[currentIndex + 1].select();
+        }
+      }
+      return;
+    }
+
+    // Shift: Focus back to medicine section (search bar)
+    if (e.key === 'Shift') {
+      if (searchEl) {
+        searchEl.focus();
+      }
+      return;
+    }
+
+    // Enter in payment fields -> Checkout
+    if (e.key === 'Enter') {
+      const activeId = document.activeElement ? document.activeElement.id : '';
+      if (['posDiscount', 'posTax', 'posPaid'].includes(activeId)) {
+        e.preventDefault();
+        checkout();
+        return;
+      }
+    }
+
+    // F8: Generate Invoice
+    if (e.key === 'F8') {
+      e.preventDefault();
+      checkout();
+      return;
+    }
+
+    // F9 or Shift+Delete: Clear Cart
+    if (e.key === 'F9' || (e.key === 'Delete' && e.shiftKey)) {
+      e.preventDefault();
+      clearCart();
+      return;
+    }
+
+    // Escape: Clear Search or Cart Selection
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      if (searchEl) {
+        searchEl.value = '';
+        posFilter.q = '';
+        renderMedGrid();
+        searchEl.focus();
+      }
+      return;
+    }
+
+    // Auto-focus search if typing alphanumeric and nothing else focused
+    if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      if (document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'SELECT' && document.activeElement.tagName !== 'TEXTAREA' && document.activeElement.tagName !== 'BUTTON') {
+        if (searchEl) {
+          searchEl.focus();
+        }
+      }
+    }
+
+    // Arrow Down or Right from search or body -> focus first med card
+    if ((e.key === 'ArrowDown' || e.key === 'ArrowRight') && (isSearchFocused || document.activeElement === document.body)) {
+      e.preventDefault();
+      const firstCard = document.querySelector('.med-card, .med-row');
+      if (firstCard) firstCard.focus();
+    }
+
+    // Grid Navigation
+    if (document.activeElement.classList.contains('med-card') || document.activeElement.classList.contains('med-row')) {
+      const cards = Array.from(document.querySelectorAll('.med-card, .med-row'));
+      const index = cards.indexOf(document.activeElement);
+      
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        if (index < cards.length - 1) cards[index + 1].focus();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        if (index > 0) cards[index - 1].focus();
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const isList = document.getElementById('posMedGrid').classList.contains('list-view');
+        if (isList) {
+           if (index < cards.length - 1) cards[index + 1].focus();
+        } else {
+           const containerWidth = document.getElementById('posMedGrid').clientWidth;
+           const cardWidth = document.activeElement.clientWidth + 10;
+           const cols = Math.floor(containerWidth / cardWidth) || 1;
+           if (index + cols < cards.length) cards[index + cols].focus();
+        }
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        const isList = document.getElementById('posMedGrid').classList.contains('list-view');
+        if (isList) {
+           if (index > 0) cards[index - 1].focus();
+           else if (searchEl) searchEl.focus();
+        } else {
+           const containerWidth = document.getElementById('posMedGrid').clientWidth;
+           const cardWidth = document.activeElement.clientWidth + 10;
+           const cols = Math.floor(containerWidth / cardWidth) || 1;
+           if (index - cols >= 0) cards[index - cols].focus();
+           else if (searchEl) searchEl.focus();
+        }
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        document.activeElement.click(); // Triggers addToCart
+      } else if (e.key === 'Backspace') {
+        e.preventDefault();
+        const onclickAttr = document.activeElement.getAttribute('onclick');
+        if (onclickAttr) {
+          const match = onclickAttr.match(/addToCart\((\d+)\)/);
+          if (match) {
+            changeQty(parseInt(match[1], 10), -1);
+          }
+        }
+      } else if (e.key === 'Delete') {
+        e.preventDefault();
+        const onclickAttr = document.activeElement.getAttribute('onclick');
+        if (onclickAttr) {
+          const match = onclickAttr.match(/addToCart\((\d+)\)/);
+          if (match) {
+            removeFromCart(parseInt(match[1], 10));
+          }
+        }
+      }
+    }
+  });
 });
 
 function addToCart(medId) {
@@ -491,6 +674,7 @@ function changeQty(medId, delta) {
   item.qty = newQty;
   item.sub = item.qty * item.price;
   renderCart();
+  renderMedGrid();
 }
 
 function setQty(medId, qtyValue) {
@@ -507,6 +691,7 @@ function setQty(medId, qtyValue) {
   }
   item.sub = item.qty * item.price;
   renderCart();
+  renderMedGrid();
 }
 
 function removeFromCart(medId) {

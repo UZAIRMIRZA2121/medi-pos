@@ -1112,3 +1112,10 @@ body.pos-fullscreen .topbar .menu-btn { display: none !important; }
 @media (max-width: 600px) {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
 }
+ / *   K e y b o a r d   f o c u s   s t y l e s   * / 
+ . m e d - c a r d : f o c u s ,   . m e d - r o w : f o c u s   { 
+     o u t l i n e :   2 p x   s o l i d   v a r ( - - p r i m a r y ) ; 
+     o u t l i n e - o f f s e t :   2 p x ; 
+ } 
+  
+ 
