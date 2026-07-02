@@ -96,8 +96,16 @@ Route::middleware(['auth', 'subscription.active'])->group(function () {
     
     // Manual Sync for Local POS
     Route::post('/manual-sync', function () {
-        \Illuminate\Support\Facades\Artisan::call('sync:run');
-        return back()->with('success', 'Manual Sync Completed Successfully!');
+        $exitCode = \Illuminate\Support\Facades\Artisan::call('sync:run');
+        if ($exitCode === 0) {
+            return back()->with('success', 'Manual Sync Completed Successfully!');
+        } else {
+            $output = \Illuminate\Support\Facades\Artisan::output();
+            if (str_contains($output, 'Unauthorized: Sync Access Revoked')) {
+                return back()->with('error', 'Sync Failed: Sync Access Revoked by Super Admin.');
+            }
+            return back()->with('error', 'Sync Failed. Please check logs for details.');
+        }
     })->name('manual.sync');
 
     // API endpoints for AJAX fetch

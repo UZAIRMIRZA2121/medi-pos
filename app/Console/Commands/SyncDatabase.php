@@ -91,10 +91,13 @@ class SyncDatabase extends Command
                         DB::table($table)->whereIn('id', $ids)->update(['last_synced_at' => $now]);
                     }
                 } else {
-                    $this->error("Cloud API returned an error during push.");
+                    $msg = $response->json('message') ?? 'Unknown Error';
+                    $this->error("Cloud API returned an error during push: " . $msg);
+                    return 1;
                 }
             } catch (\Exception $e) {
                 $this->error("Failed to connect to Cloud API for pushing: " . $e->getMessage());
+                return 1;
             }
         } else {
             $this->info("No local changes to push.");
@@ -151,14 +154,18 @@ class SyncDatabase extends Command
                     $this->info("No new changes on the cloud.");
                 }
             } else {
-                $this->error("Cloud API returned an error during pull.");
+                $msg = $response->json('message') ?? 'Unknown Error';
+                $this->error("Cloud API returned an error during pull: " . $msg);
+                return 1;
             }
         } catch (\Exception $e) {
             $this->error("Failed to connect to Cloud API for pulling: " . $e->getMessage());
+            return 1;
         }
         } // End of foreach ($owners as $owner)
 
         $this->info("Sync completed for all users.");
+        return 0;
     }
 
     /**
