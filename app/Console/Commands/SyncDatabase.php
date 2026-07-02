@@ -46,7 +46,7 @@ class SyncDatabase extends Command
         }
         $userId = $owner->id;
 
-        $tables = ['categories', 'suppliers', 'customers', 'medicines', 'sales', 'sale_items', 'expenses', 'purchase_orders', 'purchase_order_items'];
+        $tables = ['categories', 'suppliers', 'customers', 'medicines', 'sales', 'sale_items', 'expenses', 'purchase_orders', 'purchase_order_items', 'staff', 'business_settings', 'print_settings'];
 
         // ==========================================
         // 1. PUSH LOCAL CHANGES TO CLOUD

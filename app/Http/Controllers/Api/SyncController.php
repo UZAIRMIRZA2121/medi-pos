@@ -22,7 +22,7 @@ class SyncController extends Controller
             foreach ($payload as $table => $records) {
                 foreach ($records as $record) {
                     // Security: Enforce user_id if this table has it in the payload, or just force it for tenant tables
-                    if (in_array($table, ['categories', 'medicines', 'suppliers', 'customers', 'sales', 'expenses', 'purchase_orders'])) {
+                    if (in_array($table, ['categories', 'medicines', 'suppliers', 'customers', 'sales', 'expenses', 'purchase_orders', 'staff', 'business_settings', 'print_settings'])) {
                         $record['user_id'] = $userId;
                     }
 
@@ -52,7 +52,7 @@ class SyncController extends Controller
         $userId = $request->input('user_id');
         $lastSync = $request->input('last_sync', '1970-01-01 00:00:00');
         
-        $tables = ['categories', 'suppliers', 'customers', 'medicines', 'sales', 'expenses', 'purchase_orders'];
+        $tables = ['categories', 'suppliers', 'customers', 'medicines', 'sales', 'expenses', 'purchase_orders', 'staff', 'business_settings', 'print_settings'];
         $changes = [];
 
         foreach ($tables as $table) {
